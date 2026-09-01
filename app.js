@@ -52,9 +52,10 @@ function $(id){return document.getElementById(id)}
 function draw(){
   const app=$("app");
   if(S.screen==="setup"){
-    app.innerHTML=`<header class="top"><b>曖了曖了</b><span class="muted">離線網頁版</span></header>
+    app.innerHTML=`<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">離線網頁版</span></header>
     <main class="pad">
-      <p class="muted">國語日常。選職業跟關係後開始。解壓後請用 Chrome 或 Edge 開 index.html。</p>
+      <div class="mascots"><img src="dino-boy.jpg" alt="恐龍寶寶男"><img src="dino-girl.jpg" alt="恐龍寶寶女"></div>
+      <p class="muted">國語日常。選職業跟關係後開始。</p>
       <label>你的名字</label><input id="me" type="text" value="${esc(S.myName)}"/>
       <label>對方名字</label><input id="them" type="text" value="${esc(S.theirName)}"/>
       <label>對方職業</label><input id="job" type="text" value="${esc(S.job)}"/>
@@ -75,7 +76,7 @@ function draw(){
     return;
   }
   if(S.screen==="call"){
-    const media=S.mediaKind==="video"?`<video class="fill" src="${S.media}" autoplay muted loop playsinline></video>`:S.media?`<img class="fill" src="${S.media}" alt="">`:"";
+    const media=S.mediaKind==="video"?`<video class="fill" src="${S.media}" autoplay muted loop playsinline></video>`:S.media?`<img class="fill" src="${S.media}" alt="">`:`<img class="fill" src="dino-girl.jpg" alt="">`;
     app.innerHTML=`<div class="call">${media}<div class="shade"></div><div class="ui">
       <div class="top">${esc(S.theirName)} · 視訊中也可以打字</div>
       <div class="logs" id="logs"></div>
@@ -88,11 +89,11 @@ function draw(){
     $("cin").focus();
     return;
   }
-  app.innerHTML=`<header class="top"><b>曖了曖了</b><span class="muted">離線網頁版</span></header>
+  app.innerHTML=`<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">離線網頁版</span></header>
   <div class="chat">
     <div class="chatbar">
       <button class="icon" id="back" type="button">←</button>
-      <div class="av">${S.media&&S.mediaKind==="img"?`<img src="${S.media}" alt="">`:esc(S.theirName).slice(0,1)}</div>
+      <div class="av">${S.media&&S.mediaKind==="img"?`<img src="${S.media}" alt="">`:`<img src="dino-girl.jpg" alt="">`}</div>
       <div style="flex:1;min-width:0"><b>${esc(S.theirName)}</b><div class="muted">${S.typing?"輸入中…":"在線上"} · ${esc(S.job)}</div></div>
       <button class="icon" id="wall" type="button">背景</button>
       <button class="icon" id="vid" type="button">視訊</button>
