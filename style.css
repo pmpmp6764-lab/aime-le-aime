@@ -1,0 +1,45 @@
+:root{--line:#06c755;--bubble:#a8e063;--chat:#8ba4b4;--paper:#f7f7f2;--ink:#1a1a1a;--muted:#6b7280;--nav:#f3f4f6;--call:#121417;--danger:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--nav);color:var(--ink);min-height:100dvh}
+button,a,[role=button]{cursor:pointer}
+#app{max-width:960px;margin:0 auto;min-height:100dvh;background:var(--paper);display:flex;flex-direction:column}
+header.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #e5e7eb;flex-shrink:0}
+header.top b{font-size:18px}
+.muted{color:var(--muted);font-size:13px}
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.pad{padding:24px 20px 32px;overflow:auto}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:16px 0 6px}
+input[type=text]{width:100%;height:44px;border:1px solid #d1d5db;border-radius:12px;padding:0 12px;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip,.rel{height:36px;border-radius:999px;border:1px solid #d1d5db;background:#fff;padding:0 12px;font-size:12px}
+.chip.on,.rel.on{background:var(--line);color:#fff;border-color:var(--line)}
+.rels{display:flex;gap:8px}
+.rel{flex:1;height:44px;border-radius:12px;font-size:14px}
+.up{height:112px;border:1px dashed #d1d5db;border-radius:12px;background:var(--nav);display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:12px;font-size:14px;color:var(--muted)}
+.up img,.up video{width:100%;height:100%;object-fit:cover}
+.btn{height:48px;border:0;border-radius:999px;background:var(--line);color:#fff;font-weight:700;font-size:16px;width:100%;margin-top:24px}
+.chat{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--chat);position:relative}
+.chatbar{height:56px;background:var(--paper);display:flex;align-items:center;gap:8px;padding:0 8px;flex-shrink:0}
+.av{width:36px;height:36px;border-radius:50%;background:var(--line);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden;flex-shrink:0}
+.av img,.av video{width:100%;height:100%;object-fit:cover}
+.logs{flex:1;overflow:auto;padding:12px;position:relative;z-index:1}
+.sys{text-align:center;color:#fff;font-size:12px;margin:8px 0;text-shadow:0 1px 2px #0006}
+.row{display:flex;margin:8px 0}
+.row.me{justify-content:flex-end}
+.bub{max-width:75%;padding:8px 12px;border-radius:18px;font-size:14px;line-height:1.5}
+.me .bub{background:var(--bubble);border-bottom-right-radius:4px}
+.them .bub{background:var(--paper);border-bottom-left-radius:4px;margin-left:8px}
+.sticker{width:64px;height:64px;border-radius:16px;background:var(--bubble);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;text-align:center}
+.pic{max-height:200px;border-radius:12px}
+.composer{background:var(--paper);display:flex;align-items:center;gap:6px;padding:8px;flex-shrink:0}
+.composer input{flex:1;height:44px;border:0;background:var(--nav);border-radius:999px;padding:0 16px}
+.send{height:44px;min-width:56px;border:0;border-radius:999px;background:var(--line);color:#fff;font-weight:700}
+.tray{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px;background:var(--paper);border-top:1px solid #eee}
+.icon{width:44px;height:44px;border:0;background:transparent;font-size:18px}
+.call{flex:1;background:var(--call);color:#fff;display:flex;flex-direction:column;position:relative}
+.call .fill{position:absolute;inset:0;object-fit:cover;width:100%;height:100%}
+.call .ui{position:relative;z-index:2;display:flex;flex-direction:column;height:100%}
+.call form{display:flex;gap:8px;padding:8px}
+.call form input{flex:1;height:44px;border-radius:999px;border:0;padding:0 12px;color:var(--ink)}
+.hang{width:64px;height:64px;border-radius:50%;background:var(--danger);border:0;color:#fff;font-weight:700}
+.wall{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
