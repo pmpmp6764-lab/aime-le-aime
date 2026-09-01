@@ -5,6 +5,15 @@ const S={screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"d
 
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function hit(t,ks){return ks.some(k=>t.includes(k))}
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    if(c==="&") return "\u0026amp;";
+    if(c==="<") return "\u0026lt;";
+    if(c===">") return "\u0026gt;";
+    if(c==='"') return "\u0026quot;";
+    return "\u0026#39;";
+  });
+}
 function reply(raw){
   const t=raw.trim(), r=S.relation, job=S.job||"上班族";
   if(!t) return "蛤？你要說什麼";
@@ -36,97 +45,93 @@ function fileUrl(f){return URL.createObjectURL(f)}
 function send(text){
   const t=(text||"").trim(); if(!t||S.typing) return;
   S.messages.push({who:"me",text:t}); S.typing=true; draw();
-  setTimeout(()=>{S.messages.push({who:"them",text:reply(t)});S.typing=false;draw()},700);
+  setTimeout(function(){S.messages.push({who:"them",text:reply(t)});S.typing=false;draw()},700);
 }
 function sendSticker(label){
   if(S.typing) return;
   S.messages.push({who:"me",kind:"sticker",text:label}); S.typing=true; draw();
-  setTimeout(()=>{S.messages.push({who:"them",text:label==="真的假的"?"啥":"是喔"});S.typing=false;draw()},700);
+  setTimeout(function(){S.messages.push({who:"them",text:label==="真的假的"?"啥":"是喔"});S.typing=false;draw()},700);
 }
 function sendImg(url){
   if(S.typing) return;
   S.messages.push({who:"me",kind:"image",image:url,text:""}); S.typing=true; draw();
-  setTimeout(()=>{S.messages.push({who:"them",text:pick(["這張怎樣 好看欸","你在哪拍的"])});S.typing=false;draw()},700);
+  setTimeout(function(){S.messages.push({who:"them",text:pick(["這張怎樣 好看欸","你在哪拍的"])});S.typing=false;draw()},700);
 }
 function $(id){return document.getElementById(id)}
 function draw(){
   const app=$("app");
+  if(!app) return;
   if(S.screen==="setup"){
-    app.innerHTML=`<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">離線網頁版</span></header>
-    <main class="pad">
-      <div class="mascots"><img src="dino-boy.jpg" alt="恐龍寶寶男"><img src="dino-girl.jpg" alt="恐龍寶寶女"></div>
-      <p class="muted">國語日常。選職業跟關係後開始。</p>
-      <label>你的名字</label><input id="me" type="text" value="${esc(S.myName)}"/>
-      <label>對方名字</label><input id="them" type="text" value="${esc(S.theirName)}"/>
-      <label>對方職業</label><input id="job" type="text" value="${esc(S.job)}"/>
-      <div class="chips">${JOBS.map(j=>`<button class="chip ${S.job===j?"on":""}" data-job="${j}">${j}</button>`).join("")}</div>
-      <label>你們的關係</label>
-      <div class="rels">${RELS.map(([k,v])=>`<button class="rel ${S.relation===k?"on":""}" data-rel="${k}">${v}</button>`).join("")}</div>
-      <label>對方形象</label>
-      <div class="up" id="up">${S.media? (S.mediaKind==="video"?`<video src="${S.media}" autoplay muted loop playsinline></video>`:`<img src="${S.media}" alt="">`):"點這裡上傳照片或短影片"}</div>
-      <button class="btn" id="go">開始聊天</button>
-    </main>`;
-    app.querySelectorAll("[data-job]").forEach(b=>b.onclick=()=>{S.job=b.dataset.job;draw()});
-    app.querySelectorAll("[data-rel]").forEach(b=>b.onclick=()=>{S.relation=b.dataset.rel;draw()});
-    $("me").oninput=e=>S.myName=e.target.value;
-    $("them").oninput=e=>S.theirName=e.target.value;
-    $("job").oninput=e=>S.job=e.target.value;
-    $("up").onclick=()=>{const i=document.createElement("input");i.type="file";i.accept="image/*,video/*";i.onchange=()=>{const f=i.files[0];if(!f)return;S.media=fileUrl(f);S.mediaKind=f.type.startsWith("video/")?"video":"img";draw()};i.click()};
-    $("go").onclick=()=>{hi();S.screen="chat";draw()};
+    app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">離線網頁版</span></header>'+
+    '<main class="pad">'+
+      '<div class="mascots"><img src="dino-boy.jpg" alt="恐龍寶寶男" onerror="this.style.display=\'none\'"><img src="dino-girl.jpg" alt="恐龍寶寶女" onerror="this.style.display=\'none\'"></div>'+
+      '<p class="muted">國語日常。選職業跟關係後開始。</p>'+
+      '<label>你的名字</label><input id="me" type="text" value="'+esc(S.myName)+'"/>'+
+      '<label>對方名字</label><input id="them" type="text" value="'+esc(S.theirName)+'"/>'+
+      '<label>對方職業</label><input id="job" type="text" value="'+esc(S.job)+'"/>'+
+      '<div class="chips">'+JOBS.map(function(j){return '<button class="chip '+(S.job===j?"on":"")+'" data-job="'+j+'">'+j+"</button>"}).join("")+"</div>"+
+      "<label>你們的關係</label>"+
+      '<div class="rels">'+RELS.map(function(x){return '<button class="rel '+(S.relation===x[0]?"on":"")+'" data-rel="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
+      "<label>對方形象</label>"+
+      '<div class="up" id="up">'+(S.media?(S.mediaKind==="video"?'<video src="'+S.media+'" autoplay muted loop playsinline></video>':'<img src="'+S.media+'" alt="">'):"點這裡上傳照片或短影片")+"</div>"+
+      '<button class="btn" id="go">開始聊天</button>'+
+    "</main>";
+    app.querySelectorAll("[data-job]").forEach(function(b){b.onclick=function(){S.job=b.getAttribute("data-job");draw()}});
+    app.querySelectorAll("[data-rel]").forEach(function(b){b.onclick=function(){S.relation=b.getAttribute("data-rel");draw()}});
+    $("me").oninput=function(e){S.myName=e.target.value};
+    $("them").oninput=function(e){S.theirName=e.target.value};
+    $("job").oninput=function(e){S.job=e.target.value};
+    $("up").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*,video/*";i.onchange=function(){var f=i.files[0];if(!f)return;S.media=fileUrl(f);S.mediaKind=f.type.indexOf("video/")===0?"video":"img";draw()};i.click()};
+    $("go").onclick=function(){hi();S.screen="chat";draw()};
     return;
   }
   if(S.screen==="call"){
-    const media=S.mediaKind==="video"?`<video class="fill" src="${S.media}" autoplay muted loop playsinline></video>`:S.media?`<img class="fill" src="${S.media}" alt="">`:`<img class="fill" src="dino-girl.jpg" alt="">`;
-    app.innerHTML=`<div class="call">${media}<div class="shade"></div><div class="ui">
-      <div class="top">${esc(S.theirName)} · 視訊中也可以打字</div>
-      <div class="logs" id="logs"></div>
-      <form class="composer" id="cf"><input id="cin" placeholder="視訊中傳訊…" autocomplete="off"/><button class="send" type="submit">傳送</button></form>
-      <div class="hangwrap"><button class="hang" id="hang" type="button">掛斷</button></div>
-    </div></div>`;
+    var media=S.mediaKind==="video"?'<video class="fill" src="'+S.media+'" autoplay muted loop playsinline></video>':S.media?'<img class="fill" src="'+S.media+'" alt="">':'<img class="fill" src="dino-girl.jpg" alt="" onerror="this.style.display=\'none\'">';
+    app.innerHTML='<div class="call">'+media+'<div class="shade"></div><div class="ui">'+
+      '<div class="top">'+esc(S.theirName)+" · 視訊中也可以打字</div>"+
+      '<div class="logs" id="logs"></div>'+
+      '<form class="composer" id="cf"><input id="cin" placeholder="視訊中傳訊…" autocomplete="off"/><button class="send" type="submit">傳送</button></form>'+
+      '<div class="hangwrap"><button class="hang" id="hang" type="button">掛斷</button></div>'+
+    "</div></div>";
     fillLogs($("logs"));
-    $("cf").onsubmit=e=>{e.preventDefault();send($("cin").value);};
-    $("hang").onclick=()=>{S.screen="chat";S.messages.push({who:"sys",text:"通話已結束"});draw()};
+    $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value)};
+    $("hang").onclick=function(){S.screen="chat";S.messages.push({who:"sys",text:"通話已結束"});draw()};
     $("cin").focus();
     return;
   }
-  app.innerHTML=`<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">離線網頁版</span></header>
-  <div class="chat">
-    <div class="chatbar">
-      <button class="icon" id="back" type="button">←</button>
-      <div class="av">${S.media&&S.mediaKind==="img"?`<img src="${S.media}" alt="">`:`<img src="dino-girl.jpg" alt="">`}</div>
-      <div style="flex:1;min-width:0"><b>${esc(S.theirName)}</b><div class="muted">${S.typing?"輸入中…":"在線上"} · ${esc(S.job)}</div></div>
-      <button class="icon" id="wall" type="button">背景</button>
-      <button class="icon" id="vid" type="button">視訊</button>
-    </div>
-    <div class="stage">
-      ${S.wall?`<img class="wall" src="${S.wall}" alt=""><div class="dim"></div>`:""}
-      <div class="logs" id="logs"></div>
-    </div>
-    <div class="tray" id="tray" hidden>${STICKERS.map(s=>`<button class="sticker" data-s="${s}" type="button">${s}</button>`).join("")}</div>
-    <form class="composer" id="cf">
-      <button class="icon" id="smile" type="button">☺</button>
-      <button class="icon" id="imgb" type="button">＋</button>
-      <input id="cin" placeholder="Aa" autocomplete="off"/>
-      <button class="send" type="submit">傳送</button>
-    </form>
-  </div>`;
+  app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">離線網頁版</span></header>'+
+  '<div class="chat">'+
+    '<div class="chatbar">'+
+      '<button class="icon" id="back" type="button">←</button>'+
+      '<div class="av">'+(S.media&&S.mediaKind==="img"?'<img src="'+S.media+'" alt="">':'<img src="dino-girl.jpg" alt="" onerror="this.style.display=\'none\'">')+"</div>"+
+      '<div style="flex:1;min-width:0"><b>'+esc(S.theirName)+'</b><div class="muted">'+(S.typing?"輸入中…":"在線上")+" · "+esc(S.job)+"</div></div>"+
+      '<button class="icon" id="wall" type="button">背景</button>'+
+      '<button class="icon" id="vid" type="button">視訊</button>'+
+    "</div>"+
+    '<div class="stage">'+(S.wall?'<img class="wall" src="'+S.wall+'" alt=""><div class="dim"></div>':"")+'<div class="logs" id="logs"></div></div>'+
+    '<div class="tray" id="tray" hidden>'+STICKERS.map(function(s){return '<button class="sticker" data-s="'+s+'" type="button">'+s+"</button>"}).join("")+"</div>"+
+    '<form class="composer" id="cf">'+
+      '<button class="icon" id="smile" type="button">☺</button>'+
+      '<button class="icon" id="imgb" type="button">＋</button>'+
+      '<input id="cin" placeholder="Aa" autocomplete="off"/>'+
+      '<button class="send" type="submit">傳送</button>'+
+    "</form></div>";
   fillLogs($("logs"));
-  $("back").onclick=()=>{S.screen="setup";draw()};
-  $("vid").onclick=()=>{S.screen="call";draw()};
-  $("smile").onclick=()=>{const t=$("tray"); t.hidden=!t.hidden};
-  $("tray").querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>sendSticker(b.dataset.s));
-  $("cf").onsubmit=e=>{e.preventDefault();send($("cin").value)};
-  $("imgb").onclick=()=>{const i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=()=>{if(i.files[0])sendImg(fileUrl(i.files[0]))};i.click()};
-  $("wall").onclick=()=>{const i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=()=>{if(i.files[0]){S.wall=fileUrl(i.files[0]);draw()}};i.click()};
+  $("back").onclick=function(){S.screen="setup";draw()};
+  $("vid").onclick=function(){S.screen="call";draw()};
+  $("smile").onclick=function(){var t=$("tray"); t.hidden=!t.hidden};
+  $("tray").querySelectorAll("[data-s]").forEach(function(b){b.onclick=function(){sendSticker(b.getAttribute("data-s"))}});
+  $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value)};
+  $("imgb").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0])sendImg(fileUrl(i.files[0]))};i.click()};
+  $("wall").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0]){S.wall=fileUrl(i.files[0]);draw()}};i.click()};
   $("cin").focus();
 }
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">","\"":""","'":"&#39;"}[c]))}
 function fillLogs(box){
-  box.innerHTML=S.messages.map(m=>{
-    if(m.who==="sys") return `<p class="sys"><span>${esc(m.text)}</span></p>`;
-    const inner=m.kind==="sticker"?`<div class="sticker">${esc(m.text)}</div>`:m.kind==="image"?`<img class="pic" src="${m.image}" alt="">`:`<div class="bub">${esc(m.text)}</div>`;
-    return `<div class="row ${m.who}">${m.who==="them"?`<div class="av">${esc(S.theirName).slice(0,1)}</div>`:""}<div>${inner}</div></div>`;
-  }).join("")+(S.typing?`<p class="sys"><span>輸入中…</span></p>`:"");
+  box.innerHTML=S.messages.map(function(m){
+    if(m.who==="sys") return '<p class="sys"><span>'+esc(m.text)+"</span></p>";
+    var inner=m.kind==="sticker"?'<div class="sticker">'+esc(m.text)+"</div>":m.kind==="image"?'<img class="pic" src="'+m.image+'" alt="">':'<div class="bub">'+esc(m.text)+"</div>";
+    return '<div class="row '+m.who+'">'+(m.who==="them"?'<div class="av">'+esc(S.theirName).slice(0,1)+"</div>":"")+"<div>"+inner+"</div></div>";
+  }).join("")+(S.typing?'<p class="sys"><span>輸入中…</span></p>':"");
   box.scrollTop=box.scrollHeight;
 }
-draw();
+try{draw()}catch(e){document.getElementById("app").innerHTML="<p style='padding:24px'>開啟失敗："+esc(String(e))+"</p>"}
