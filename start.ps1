@@ -1,9 +1,9 @@
 $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $html = Join-Path $root "index.html"
-$host.UI.RawUI.WindowTitle = "Ambiguous LIVE"
+$host.UI.RawUI.WindowTitle = "曖了曖了LIVE"
 if (-not (Test-Path $html)) {
-  Write-Host "index.html not found"
+  Write-Host "index.html not found. Extract zip first."
   exit 1
 }
 
@@ -11,8 +11,27 @@ $port = 18765
 $url = "http://127.0.0.1:$port/index.html"
 $prefix = "http://127.0.0.1:$port/"
 
-function Open-Browser([string]$target) {
-  try { Start-Process $target } catch { cmd /c start "" "$target" }
+function Open-GameWindow([string]$target) {
+  $browsers = @(
+    "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe",
+    "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+    "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+    "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
+    "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+  )
+  foreach ($b in $browsers) {
+    if (Test-Path -LiteralPath $b) {
+      Start-Process -FilePath $b -ArgumentList @(
+        "--new-window",
+        "--app=$target",
+        "--window-size=1180,800",
+        "--window-position=80,40",
+        "--disable-features=TranslateUI"
+      )
+      return
+    }
+  }
+  Start-Process $target
 }
 
 $listener = $null
@@ -21,14 +40,13 @@ try {
   $listener.Prefixes.Add($prefix)
   $listener.Start()
 } catch {
-  Write-Host "Local server failed, opening file instead."
-  Open-Browser $html
+  Write-Host "Opening game window from file..."
+  Open-GameWindow $html
   exit 0
 }
 
-Write-Host "Opened. Keep this window open."
-Write-Host $url
-Open-Browser $url
+Write-Host "Game window opening. Keep this window open."
+Open-GameWindow $url
 
 $rootFull = [IO.Path]::GetFullPath($root)
 while ($listener.IsListening) {
@@ -52,6 +70,7 @@ while ($listener.IsListening) {
       ".html" { "text/html; charset=utf-8" }
       ".js"   { "text/javascript; charset=utf-8" }
       ".css"  { "text/css; charset=utf-8" }
+      ".svg"  { "image/svg+xml" }
       ".jpg"  { "image/jpeg" }
       ".png"  { "image/png" }
       default { "application/octet-stream" }
