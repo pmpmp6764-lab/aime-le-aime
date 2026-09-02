@@ -93,6 +93,8 @@ input[type=text]{width:100%;height:44px;border:1px solid #d1d5db;border-radius:1
 .mark{position:fixed;right:16px;bottom:12px;z-index:40;pointer-events:none;color:var(--gold);opacity:.75;font-weight:700;font-size:13px;letter-spacing:.04em}
 .mascots{display:flex;justify-content:center;gap:20px;margin-bottom:12px}
 .mascots img{width:96px;height:96px;border-radius:24px;object-fit:cover}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;padding:8px 12px;background:var(--paper);flex-shrink:0}
+.qchip{height:40px;border:1px solid #d1d5db;border-radius:999px;background:#fff;padding:0 14px;font-size:14px}
 
 </style>
 </head>
@@ -257,6 +259,34 @@ function sendImg(url){
   delayThen("（我傳了一張照片給你）", mine);
 }
 function $(id){return document.getElementById(id)}
+function lastThem(){
+  for(var i=S.messages.length-1;i>=0;i--) if(S.messages[i].who==="them"&&S.messages[i].text) return S.messages[i].text;
+  return "";
+}
+function chips(){
+  if(S.typing||S.pending) return [];
+  var t=lastThem(), r=S.relation, inCall=S.screen==="call"||S.isCalling, pool=[];
+  if(inCall) pool=["訊號還好嗎","好看","不要掛","想你","哈哈","我在聽"];
+  else {
+    if(hit(t,["安安","早安","剛下班"])) pool.push("安","吃了沒","今天怎樣");
+    if(hit(t,["吃","餓"])) pool.push("吃了","還沒","你呢");
+    if(hit(t,["累","忙"])) pool.push("辛苦了","去休息");
+    if(hit(t,["想你","抱抱","寶貝"])) pool.push(r==="friend"?"好啦好啦":"我也是","抱抱");
+    if(hit(t,["視訊","接一下"])) pool.push("好啊","等一下","先聊天");
+    if(r==="dating") pool.push("想你了","吃飯沒","在幹嘛");
+    else pool.push("好喔","是喔");
+    pool.push("哈哈","真的假的","然後呢");
+  }
+  var u=[], seen={};
+  pool.forEach(function(x){ if(x&&!seen[x]){ seen[x]=1; u.push(x);} });
+  u.sort(function(){return Math.random()-0.5});
+  return u.slice(0,3);
+}
+function chipsHtml(){
+  var c=chips();
+  if(!c.length) return "";
+  return '<div class="qrow">'+c.map(function(x){return '<button class="qchip" type="button" data-q="'+esc(x)+'">'+esc(x)+"</button>";}).join("")+"</div>";
+}
 function inviteHtml(){
   if(!S.incoming||S.screen==="call") return "";
   return '<div class="invite">'+
@@ -321,6 +351,7 @@ function draw(){
     app.innerHTML='<div class="call">'+media+'<div class="shade"></div><div class="ui">'+
       '<div class="top">'+esc(S.theirName)+" · 視訊中也可以打字</div>"+
       '<div class="logs" id="logs"></div>'+
+      chipsHtml()+
       '<form class="composer" id="cf"><textarea id="cin" rows="1" placeholder="視訊中傳訊…"></textarea><button class="send" type="submit">傳送</button></form>'+
       '<div class="hangwrap"><button class="hang" id="hang" type="button">掛斷</button></div>'+
     "</div></div>";
@@ -328,6 +359,8 @@ function draw(){
     boxVoice($("logs"));
     $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value);};
     $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.isCalling=false;S.quietUntil=S.turns+8;stopRing();S.messages.push({who:"sys",text:"通話已結束"});draw()};
+    app.querySelectorAll("[data-q]").forEach(function(b){b.onclick=function(){send(b.getAttribute("data-q"));}});
+    $("cin").focus();
     $("cin").focus();
     return;
   }
@@ -343,6 +376,7 @@ function draw(){
     "</div>"+
     '<div class="stage">'+(S.wall?'<img class="wall" src="'+S.wall+'" alt=""><div class="dim"></div>':"")+'<div class="logs" id="logs"></div></div>'+
     '<div class="tray" id="tray" hidden>'+STICKERS.map(function(s){return '<button class="sticker" data-s="'+s+'" type="button">'+s+"</button>"}).join("")+"</div>"+
+    chipsHtml()+
     '<form class="composer" id="cf">'+
       '<button class="icon" id="smile" type="button">☺</button>'+
       '<button class="icon" id="imgb" type="button">＋</button>'+
@@ -361,6 +395,8 @@ function draw(){
   $("wall").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0]){S.wall=fileUrl(i.files[0]);draw()}};i.click()};
   if($("yes")) $("yes").onclick=function(){S.incoming=false;S.isCalling=true;S.screen="call";stopRing();draw()};
   if($("no")) $("no").onclick=function(){S.incoming=false;S.isCalling=false;stopRing();S.messages.push({who:"sys",text:"你拒絕了視訊"},{who:"them",text:"好喔，那先聊天"});draw()};
+  app.querySelectorAll("[data-q]").forEach(function(b){b.onclick=function(){send(b.getAttribute("data-q"));}});
+  $("cin").focus();
   boxVoice($("logs"));
   $("cin").focus();
 }
