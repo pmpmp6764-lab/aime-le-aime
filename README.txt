@@ -1,11 +1,8 @@
-Ambiguous LIVE launcher
-=======================
-1. Right-click aime.zip -> Extract All (to Desktop)
-2. Open the extracted folder
-3. Double-click START.bat
+Ambiguous LIVE - desktop game window
+====================================
+1. Extract zip to Desktop
+2. Double-click START.bat
+3. A game window (no address bar) will open
+4. Keep the black console window open while playing
 
-Do NOT open files from inside the zip window.
-Do NOT use the old Downloads\Compressed\aime folder.
-
-Chrome / Edge will open:
-http://127.0.0.1:18765/index.html
+Need Chrome or Edge.
