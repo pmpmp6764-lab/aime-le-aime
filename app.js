@@ -1,15 +1,42 @@
 const STICKERS=["安","好喔","才沒有","真的假的","有夠累","笑死","蛤","先這樣","吃飯沒","在忙"];
-const JOBS=["醫師","護理師","教師","COSPLAY","設計師","活動主持人","調酒師","演員","公關"];
+const JOBS=["醫師","千金","總裁","COSPLAY","設計師","活動主持人","調酒師","演員","公關"];
 const RELS=[["friend","朋友"],["childhood","青梅竹馬"],["dating","熱戀中"]];
 const VOICES=[["loli","1. 嗲嗲聲蘿莉音"],["onee","2. 御姐音"],["teen","3. 青春少女音"]];
 const PERS=[["soft","1. 柔弱依賴"],["cute","2. 大方可愛"],["warm","3. 非常熱情"]];
+const ROSTER=[
+  {id:"main",name:"小雨",job:"醫師",photo:"cast/rain.jpg",callVideo:"cast/rain.mp4",personality:"cute",voice:"teen"},
+  {id:"student",name:"小安",job:"千金",photo:"cast/student.jpg",callVideo:null,personality:"cute",voice:"teen"},
+  {id:"boss",name:"雅婷",job:"總裁",photo:"cast/boss.png",callVideo:null,personality:"warm",voice:"onee"}
+];
 const S={
-  screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",
+  screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",active:"main",
   voice:"teen",personality:"cute",voiceOn:true,perf:"smooth",incoming:false,isCalling:false,turns:0,pending:false,quietUntil:0,
-  messages:[],typing:false,media:"cast/rain.jpg",mediaKind:"img",callVideo:"cast/rain.mp4",myMedia:null,myKind:null,wall:null
+  messages:[],typing:false,media:"cast/rain.jpg",mediaKind:"img",callVideo:"cast/rain.mp4",myMedia:null,myKind:null,wall:null,
+  noVideo:{}
 };
-var ringStop=null;
+(function loadSave(){
+  try{
+    var p=JSON.parse(localStorage.getItem("aime-offline-v1")||"null");
+    if(!p) return;
+    if(p.myName) S.myName=p.myName;
+    if(p.relation) S.relation=p.relation;
+    if(typeof p.voiceOn==="boolean") S.voiceOn=p.voiceOn;
+    if(p.perf) S.perf=p.perf;
+    if(p.active) applyCast(p.active,true);
+    if(p.screen==="list"||p.screen==="chat"||p.screen==="setup") S.screen=p.screen;
+  }catch(e){}
+})();
+function save(){
+  try{ localStorage.setItem("aime-offline-v1", JSON.stringify({myName:S.myName,relation:S.relation,voiceOn:S.voiceOn,perf:S.perf,active:S.active,screen:S.screen==="call"?"chat":S.screen})); }catch(e){}
+}
+function applyCast(id, keepMsgs){
+  var c=ROSTER.filter(function(x){return x.id===id})[0]||ROSTER[0];
+  S.active=c.id; S.theirName=c.name; S.job=c.job; S.personality=c.personality; S.voice=c.voice;
+  S.media=c.photo; S.mediaKind="img"; S.callVideo=c.callVideo;
+  if(!keepMsgs){ S.messages=[]; hi(); }
+}
 function blocked(){return S.screen==="call"||S.incoming||S.isCalling}
+var ringStop=null;
 function startRing(){
   stopRing();
   if(S.perf==="save") return;
@@ -68,6 +95,16 @@ function reply(raw){
   var inCall=S.screen==="call"||S.isCalling;
   var justHungUp=!inCall&&S.turns<S.quietUntil;
   if(!t) return p==="soft"?"嗯…你要說什麼":p==="warm"?"講啊，我在聽":"蛤？你要說什麼";
+  if(S.job.indexOf("千金")>=0){
+    if(inCall) return pick(["哥哥好看吧","哥哥陪我嘛","嘿嘿 哥哥在耶"]);
+    return pick(["哥哥想你了","哥哥在幹嘛 我好閒","對阿對阿","最愛你了 哥哥","哥哥陪我去買東西嘛","無聊欸"]);
+  }
+  if(S.job.indexOf("總裁")>=0||S.job.indexOf("老闆")>=0){
+    if(inCall) return pick(["臭小子這樣才對","乖乖聽話","喜歡你 很有感覺"]);
+    var b=pick(["臭小子還不起來上班","沒有加班費","乖乖聽話","這樣才對","幹的好等等給你一點獎勵","喜歡你 很有感覺","明天準時上班阿","不準跟別人約會"]);
+    if(b.indexOf("獎勵")>=0 && !inCall && !justHungUp){ S._forceCall=true; }
+    return b;
+  }
   if(hit(t,["舔","性","床","裸","色色","做愛"])) return "這個先不要啦。我們就當聊天就好。";
   if(hit(t,["晚安","睡"])) return pick(["晚安喔","去睡啦"]);
   if(hit(t,["早安"])) return pick(["早啊，吃了沒","這麼早"]);
@@ -105,7 +142,9 @@ function reply(raw){
 function hi(){
   var rel=RELS.filter(function(x){return x[0]===S.relation})[0][1];
   var text="安安";
-  if(S.relation==="dating"){
+  if(S.job.indexOf("千金")>=0) text="哥哥～好閒喔。想你了，陪我逛街好不好";
+  else if(S.job.indexOf("總裁")>=0) text="臭小子還不起來上班。沒有加班費。乖乖聽話";
+  else if(S.relation==="dating"){
     text=S.personality==="soft"?"你在嗎…想看你。可以視訊嗎":S.personality==="warm"?"安安！想你了啦。快接視訊":"安安，剛下班。想你了。要不要視訊一下";
   } else if(S.relation==="childhood") text="安安，好久不見喔。你在幹嘛";
   S.messages=[{who:"sys",text:"與 "+S.theirName+" 的對話　"+S.job+"　"+rel},{who:"them",text:text}];
@@ -123,12 +162,15 @@ function afterReply(text){
     text=String(text).replace(/要不要(開)?視訊[一下嘛好不好啦喔]*/g,"").replace(/開視訊/g,"").replace(/接一下嘛/g,"").trim();
     if(!text) text=inCall?"看你就好了":"嗯嗯，我在";
   }
-  var canRing=S.screen==="chat"&&S.relation==="dating"&&!S.isCalling&&!S.incoming&&!cooling&&S.turns>0&&S.turns%8===0;
+  var canRing=S.screen==="chat"&&S.relation==="dating"&&!S.isCalling&&!S.incoming&&!cooling&&S.turns>0&&S.turns%8===0&&!S.noVideo[S.active];
+  if(S._forceCall){ canRing=false; }
   if(canRing&&text.indexOf("視訊")<0) text+="\n想看你，接一下嘛";
   var voice=S.screen!=="call"&&S.relation==="dating"&&text.length<36&&Math.random()<0.4;
   S.messages.push({who:"them",text:text,kind:voice?"voice":"text",secs:voice?Math.max(2,Math.min(12,Math.round(text.length/4))):undefined});
   S.typing=false; S.pending=false;
-  if(canRing){ S.incoming=true; startRing(); }
+  if(S._forceCall && S.screen!=="call"){ S._forceCall=false; S.incoming=false; S.isCalling=true; S.screen="call"; stopRing(); }
+  else if(canRing){ S.incoming=true; startRing(); }
+  save();
   draw();
   if(!voice&&S.voiceOn&&S.screen!=="call") speak(text);
 }
@@ -252,7 +294,20 @@ function draw(){
     }
     $("up").onclick=function(){pickFile("them")};
     $("upme").onclick=function(){pickFile("me")};
-    $("go").onclick=function(){hi();S.screen="chat";draw()};
+    $("go").onclick=function(){hi();S.screen="list";save();draw()};
+    return;
+  }
+  if(S.screen==="list"){
+    app.innerHTML='<header class="top"><b>好友</b><span><button class="icon" id="tochat" type="button">返回聊天室</button> <button class="icon" id="toset" type="button">設定</button></span></header>'+
+      '<p class="muted" style="padding:4px 16px">小雨 · 小安（千金）· 雅婷（總裁）　完全離線</p>'+
+      ROSTER.map(function(c){
+        return '<button class="frow" type="button" data-id="'+c.id+'">'+
+          face(c.photo,"img",c.name,"av14")+
+          '<div style="flex:1;min-width:0;border-bottom:1px solid #eee;padding-bottom:12px"><b>'+esc(c.name)+'</b><div class="muted">'+esc(c.job)+'</div></div></button>';
+      }).join("");
+    $("tochat").onclick=function(){S.screen="chat";if(!S.messages.length)hi();save();draw()};
+    $("toset").onclick=function(){S.screen="setup";save();draw()};
+    app.querySelectorAll("[data-id]").forEach(function(b){b.onclick=function(){applyCast(b.getAttribute("data-id"));S.screen="chat";save();draw()}});
     return;
   }
   if(S.screen==="call"){
@@ -262,12 +317,12 @@ function draw(){
       '<div class="logs" id="logs"></div>'+
       chipsHtml()+
       '<form class="composer" id="cf"><textarea id="cin" rows="1" placeholder="視訊中傳訊…"></textarea><button class="send" type="submit">傳送</button></form>'+
-      '<div class="hangwrap"><button class="hang" id="hang" type="button">掛斷</button></div>'+
+      '<div class="hangwrap"><button class="hang" id="hang" type="button">返回聊天室</button></div>'+
     "</div></div>";
     fillLogs($("logs"));
     boxVoice($("logs"));
     $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value);};
-    $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.isCalling=false;S.quietUntil=S.turns+8;stopRing();S.messages.push({who:"sys",text:"通話已結束"});draw()};
+    $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.isCalling=false;S.quietUntil=S.turns+8;S.noVideo[S.active]=true;stopRing();S.messages.push({who:"sys",text:"通話已結束"});save();draw()};
     app.querySelectorAll("[data-q]").forEach(function(b){b.onclick=function(){send(b.getAttribute("data-q"));}});
     $("cin").focus();
     $("cin").focus();
@@ -278,7 +333,7 @@ function draw(){
     '<div class="chatbar">'+
       '<button class="icon" id="back" type="button">←</button>'+
       face(S.media,S.mediaKind,S.theirName,"av")+
-      '<div style="flex:1;min-width:0"><b>'+esc(S.theirName)+'</b><div class="muted">'+(S.typing?"輸入中…":"在線上")+" · "+esc(S.job)+"</div></div>"+
+      '<div id="sw" style="flex:1;min-width:0;text-align:left"><b>'+esc(S.theirName)+'</b><div class="muted">點這裡切換好友</div></div>'+
       '<button class="icon '+(S.voiceOn?"on":"")+'" id="vo" type="button">'+(S.voiceOn?"語音開":"語音關")+"</button>"+
       '<button class="icon" id="wall" type="button">背景</button>'+
       '<button class="icon" id="vid" type="button">視訊</button>'+
@@ -293,7 +348,8 @@ function draw(){
       '<button class="send" type="submit">傳送</button>'+
     "</form></div>"+inviteHtml();
   fillLogs($("logs"));
-  $("back").onclick=function(){S.screen="setup";draw()};
+  $("back").onclick=function(){S.screen="list";save();draw()};
+  $("sw").onclick=function(){S.screen="list";save();draw()};
   $("vid").onclick=function(){S.screen="call";S.incoming=false;S.isCalling=true;stopRing();draw()};
   $("vo").onclick=function(){S.voiceOn=!S.voiceOn;draw()};
   $("smile").onclick=function(){var t=$("tray"); t.hidden=!t.hidden};
