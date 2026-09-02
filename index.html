@@ -15,10 +15,14 @@ html,body{height:100%;min-height:100dvh}
 body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:#241c28;color:var(--ink);display:flex;align-items:center;justify-content:center}
 button,a,[role=button]{cursor:pointer}
 .game{width:100%;height:100%;max-width:1180px;max-height:800px;display:flex;flex-direction:column;background:var(--paper);border:2px solid var(--gold);border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5)}
-.gbar{height:44px;flex-shrink:0;background:#1a1420;color:var(--gold);display:flex;align-items:center;gap:8px;padding:0 12px;font-weight:700;font-size:14px}
+.gbar{height:44px;flex-shrink:0;background:#1a1420;color:var(--gold);display:flex;align-items:center;gap:8px;padding:0 12px;font-weight:700;font-size:14px;letter-spacing:.04em}
 .dot{width:12px;height:12px;border-radius:50%}
 #app{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--paper)}
-@media (max-width:767px){body{background:var(--nav);display:block}.game{max-width:none;max-height:none;height:100%;border:0;border-radius:0;box-shadow:none}.gbar{display:none}}
+@media (max-width:767px){
+  body{background:var(--nav);display:block}
+  .game{max-width:none;max-height:none;height:100%;border:0;border-radius:0;box-shadow:none}
+  .gbar{display:none}
+}
 header.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #e5e7eb;flex-shrink:0;background:var(--paper);z-index:5}
 header.top b{font-size:18px}
 .muted{color:var(--muted);font-size:13px}
@@ -33,11 +37,11 @@ input[type=text]{width:100%;height:44px;border:1px solid #d1d5db;border-radius:1
 .up{height:140px;border:1px dashed #d1d5db;border-radius:16px;background:var(--nav);display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:12px;font-size:14px;color:var(--muted)}
 .up img,.up video{width:100%;height:100%;object-fit:cover}
 .btn{height:48px;border:0;border-radius:999px;background:var(--line);color:var(--paper);font-weight:700;font-size:16px;width:100%;margin-top:24px}
-.chat{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--chat)}
+.chat{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--chat);background-image:url("hearts.svg");background-repeat:repeat;background-size:72px 72px}
 .chatbar{height:56px;background:var(--paper);display:flex;align-items:center;gap:8px;padding:0 8px;flex-shrink:0;z-index:5}
 .av{width:36px;height:36px;border-radius:50%;background:var(--line);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden;flex-shrink:0}
 .av img,.av video{width:100%;height:100%;object-fit:cover}
-.stage{flex:1;min-height:0;position:relative;overflow:auto}
+.stage{flex:1;min-height:0;position:relative;overflow:auto;background-image:url("hearts.svg");background-repeat:repeat;background-size:72px 72px}
 .wall{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:0}
 .dim{position:absolute;inset:0;background:rgba(18,20,23,.4);pointer-events:none;z-index:0}
 .logs{position:relative;z-index:1;padding:12px}
@@ -52,8 +56,18 @@ input[type=text]{width:100%;height:44px;border:1px solid #d1d5db;border-radius:1
 .sticker{width:64px;height:64px;border-radius:16px;background:var(--bubble);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;text-align:center;color:var(--ink)}
 .pic{max-height:200px;border-radius:12px}
 .tray{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px;background:var(--paper);border-top:1px solid #eee;flex-shrink:0;z-index:6}
-.composer{background:var(--paper);display:flex;align-items:center;gap:6px;padding:8px;flex-shrink:0;z-index:6;border-top:1px solid #eee;position:relative}
-.composer input{flex:1;height:44px;border:0;background:var(--nav);border-radius:999px;padding:0 16px;color:var(--ink);font-size:14px}
+.composer{background:var(--paper);display:flex;align-items:flex-end;gap:6px;padding:12px;flex-shrink:0;z-index:6;border-top:1px solid #eee;position:relative}
+.composer input,.composer textarea{flex:1;min-height:56px;max-height:140px;border:0;background:var(--nav);border-radius:16px;padding:14px 16px;color:var(--ink);font-size:16px;resize:none;font-family:inherit}
+.send{height:56px;min-width:72px;border:0;border-radius:16px;background:var(--line);color:var(--paper);font-weight:700;font-size:16px}
+.icon.on{background:var(--line);color:var(--paper);border-radius:999px;font-size:12px;width:auto;padding:0 10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fill{width:100%;height:100%;object-fit:cover}
+.av-fallback{background:var(--line);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:700}
+.invite{position:absolute;inset:0;z-index:40;background:rgba(18,20,23,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.invcard{background:var(--paper);border-radius:24px;padding:28px 24px;text-align:center;width:min(360px,100%);box-shadow:0 16px 40px rgba(0,0,0,.3)}
+.invav{width:96px;height:96px;border-radius:50%;object-fit:cover;margin:12px auto;display:flex;align-items:center;justify-content:center;background:var(--line);color:#fff;font-size:32px}
+.invbtns{display:flex;justify-content:center;gap:24px;margin-top:20px;align-items:center}
+.chat{position:relative}
 .send{height:44px;min-width:56px;border:0;border-radius:999px;background:var(--line);color:var(--paper);font-weight:700}
 .icon{width:44px;height:44px;border:0;background:transparent;font-size:18px;color:var(--ink);flex-shrink:0}
 .call{flex:1;min-height:0;background:var(--call);display:flex;flex-direction:column;position:relative}
@@ -71,40 +85,29 @@ input[type=text]{width:100%;height:44px;border:1px solid #d1d5db;border-radius:1
 .mascots{display:flex;justify-content:center;gap:20px;margin-bottom:12px}
 .mascots img{width:96px;height:96px;border-radius:24px;object-fit:cover}
 
-#boot{padding:8px 20px;color:#b45309;font-size:13px}
-.chat,.stage{background-image:url("hearts.svg");background-repeat:repeat;background-size:72px 72px;}
 </style>
 </head>
 <body>
 <div class="game">
-<div class="gbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span style="flex:1;text-align:center">曖了曖了LIVE（獨享版）</span></div>
-<div id="app">
-  <header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">離線網頁版</span></header>
-  <main class="pad">
-    <p id="boot">若上面沒有恐龍寶寶或按鈕，請改用 Chrome，並先「解壓縮」再打開這個檔。</p>
-    <div class="mascots">
-      <img src="dino-boy.jpg" alt="恐龍寶寶男" onerror="this.alt='男恐龍'"/>
-      <img src="dino-girl.jpg" alt="恐龍寶寶女" onerror="this.alt='女恐龍'"/>
-    </div>
-    <h1>曖了曖了LIVE <span class="gold">(獨享版)</span></h1>
-    <p class="muted">國語日常。選職業跟關係後開始。</p>
-    <label>你的名字</label><input id="me" type="text" value="我"/>
-    <label>對方名字</label><input id="them" type="text" value="小雨"/>
-    <label>對方職業</label><input id="job" type="text" value="醫師"/>
-    <button class="btn" id="go" type="button">開始聊天</button>
-  </main>
+<div class="gbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span style="flex:1;text-align:center">曖了曖了LIVE　遊戲視窗　（獨享版）</span></div>
+<div id="app"><p style="padding:24px;color:#6b7280">載入中…</p></div>
 </div>
-<p class="mark">曖了曖了LIVE (獨享版)</p>
 <script>
 const STICKERS=["安","好喔","才沒有","真的假的","有夠累","笑死","蛤","先這樣","吃飯沒","在忙"];
 const JOBS=["醫師","護理師","教師","COSPLAY","設計師","活動主持人","調酒師","演員","公關"];
 const RELS=[["friend","朋友"],["childhood","青梅竹馬"],["dating","熱戀中"]];
-const S={screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",messages:[],typing:false,media:null,mediaKind:null,wall:null};
+const VOICES=[["loli","1. 嗲嗲聲蘿莉音"],["onee","2. 御姐音"],["teen","3. 青春少女音"]];
+const PERS=[["soft","1. 柔弱依賴"],["cute","2. 大方可愛"],["warm","3. 非常熱情"]];
+const S={
+  screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",
+  voice:"teen",personality:"cute",voiceOn:true,incoming:false,turns:0,
+  messages:[],typing:false,media:null,mediaKind:null,myMedia:null,myKind:null,wall:null
+};
 
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function hit(t,ks){return ks.some(k=>t.includes(k))}
 function esc(s){
-  return String(s).replace(/[&<>"']/g, function(c){
+  return String(s).replace(/[&<>"']/g,function(c){
     if(c==="&") return "\u0026amp;";
     if(c==="<") return "\u0026lt;";
     if(c===">") return "\u0026gt;";
@@ -112,97 +115,156 @@ function esc(s){
     return "\u0026#39;";
   });
 }
+function speak(text){
+  if(!S.voiceOn||!window.speechSynthesis) return;
+  var u=new SpeechSynthesisUtterance(String(text).slice(0,160));
+  u.lang="zh-TW";
+  var list=speechSynthesis.getVoices();
+  var v=list.filter(function(x){return (x.lang||"").toLowerCase().indexOf("zh-tw")===0})[0]
+    ||list.filter(function(x){return (x.lang||"").toLowerCase().indexOf("zh")===0})[0];
+  if(v) u.voice=v;
+  if(S.voice==="loli"){u.pitch=1.45;u.rate=1.02}
+  else if(S.voice==="onee"){u.pitch=0.88;u.rate=0.92}
+  else {u.pitch=1.12;u.rate=1}
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+function face(url,kind,name,cls){
+  if(url&&kind==="video") return '<video class="'+cls+'" src="'+url+'" muted loop autoplay playsinline></video>';
+  if(url) return '<img class="'+cls+'" src="'+url+'" alt="">';
+  return '<div class="'+cls+' av-fallback">'+esc(name).slice(0,1)+"</div>";
+}
 function reply(raw){
-  const t=raw.trim(), r=S.relation, job=S.job||"上班族";
-  if(!t) return "蛤？你要說什麼";
+  var t=raw.trim(), r=S.relation, job=S.job||"上班族", p=S.personality;
+  if(!t) return p==="soft"?"嗯…你要說什麼":p==="warm"?"講啊，我在聽":"蛤？你要說什麼";
   if(hit(t,["舔","性","床","裸","色色","做愛"])) return "這個先不要啦。我們就當聊天就好。";
-  if(hit(t,["晚安","睡"])) return pick(["晚安喔","去睡啦，明天再講"]);
-  if(hit(t,["早安"])) return pick(["早啊，吃了沒","這麼早。咖啡了沒"]);
+  if(hit(t,["晚安","睡"])) return r==="dating"?pick(["晚安喔。想你","去睡啦，明天視訊"]):pick(["晚安喔","去睡啦"]);
+  if(hit(t,["早安"])) return pick(["早啊，吃了沒","這麼早"]);
   if(t==="安"||hit(t,["安安","hi","HI","嗨","哈囉"])) return pick(["安","安安","安，有事嗎"]);
   if(hit(t,["在嗎","在嘛"])) return pick(["在啊","在，有事嗎"]);
-  if(hit(t,["工作","上班","職業","COSPLAY","漫展","值班"])) return pick(["對啊我是"+job,"今天班有夠長，晚點回你"]);
-  if(hit(t,["想你","喜歡你","愛你"])) {
+  if(hit(t,["想你","喜歡你","愛你","寶貝","抱抱","親親"])) {
     if(r==="friend") return "想太多。我們是朋友";
-    return pick(["才沒有想你。誰准你突然講這個","你很煩耶。好啦有想"]);
+    if(r==="dating") return pick(["想你啊","抱抱。想看你","寶貝你很會講。接一下視訊好不好"]);
+    return pick(["才沒有想你。好啦有一點點"]);
   }
   if(hit(t,["真的假的"])) return "啥";
-  if(hit(t,["笑死"])) return pick(["笑死","你好煩 笑死"]);
-  if(hit(t,["作業","報告","教授","上課"])) return pick(["報告寫了沒 我都還沒","教授有夠機車"]);
-  if(hit(t,["先這樣","掰"])) return pick(["好喔，到了跟我說","先這樣啦"]);
-  if(hit(t,["吃","餓","便當"])) return pick(["吃飽沒","你想吃什麼"]);
+  if(hit(t,["視訊","通話","看你"])) return r==="dating"?pick(["想看你，接一下嘛","快接，我想看你"]):pick(["好啊，你開我就接"]);
+  if(hit(t,["吃","餓"])) return r==="dating"?pick(["寶貝你吃飽沒","你想吃什麼"]):pick(["吃飽沒","你想吃什麼"]);
   if(hit(t,["累","忙"])) return pick(["有夠累喔，先去休息","好喔，忙完再回我"]);
-  if(hit(t,["視訊","通話"])) return pick(["好啊，你開我就接","等一下，我先整理一下"]);
-  return pick(["是喔","然後呢","這樣喔","好喔","哈哈好","可以啊","好啦好啦"]);
+  if(r==="dating") return pick(["想你了","抱抱。今天好想你","要不要視訊，想看你","寶貝你在幹嘛"]);
+  return pick(["是喔","然後呢","這樣喔","好喔","哈哈好","可以啊"]);
 }
 function hi(){
-  const rel=RELS.find(x=>x[0]===S.relation)[1];
-  const text=S.relation==="dating"?"安安，剛下班。你吃飯了沒":S.relation==="childhood"?"安安，好久不見喔。你在幹嘛":"安安";
+  var rel=RELS.filter(function(x){return x[0]===S.relation})[0][1];
+  var text="安安";
+  if(S.relation==="dating"){
+    text=S.personality==="soft"?"你在嗎…想看你。可以視訊嗎":S.personality==="warm"?"安安！想你了啦。快接視訊":"安安，剛下班。想你了。要不要視訊一下";
+  } else if(S.relation==="childhood") text="安安，好久不見喔。你在幹嘛";
   S.messages=[{who:"sys",text:"與 "+S.theirName+" 的對話　"+S.job+"　"+rel},{who:"them",text:text}];
+  S.turns=0; S.incoming=false;
+  if(S.relation==="dating") setTimeout(function(){ if(S.screen==="chat"){ S.incoming=true; draw(); } },2200);
 }
 function fileUrl(f){return URL.createObjectURL(f)}
+function afterReply(text){
+  S.turns+=1;
+  if(S.screen==="chat"&&S.relation==="dating"&&(text.indexOf("視訊")>=0||S.turns%4===0)){
+    S.incoming=true;
+    if(text.indexOf("視訊")<0) text+="\n想看你，接一下嘛";
+  }
+  S.messages.push({who:"them",text:text}); S.typing=false; draw(); speak(text);
+}
 function send(text){
-  const t=(text||"").trim(); if(!t||S.typing) return;
+  var t=(text||"").trim(); if(!t||S.typing) return;
+  if(S.incoming&&/好啊|好呀|可以|接|開/.test(t)){
+    S.messages.push({who:"me",text:t}); S.incoming=false; S.screen="call"; draw(); return;
+  }
   S.messages.push({who:"me",text:t}); S.typing=true; draw();
-  setTimeout(function(){S.messages.push({who:"them",text:reply(t)});S.typing=false;draw()},700);
+  setTimeout(function(){ afterReply(reply(t)); },700);
 }
 function sendSticker(label){
   if(S.typing) return;
   S.messages.push({who:"me",kind:"sticker",text:label}); S.typing=true; draw();
-  setTimeout(function(){S.messages.push({who:"them",text:label==="真的假的"?"啥":"是喔"});S.typing=false;draw()},700);
+  setTimeout(function(){ afterReply(label==="真的假的"?"啥":"是喔"); },700);
 }
 function sendImg(url){
   if(S.typing) return;
   S.messages.push({who:"me",kind:"image",image:url,text:""}); S.typing=true; draw();
-  setTimeout(function(){S.messages.push({who:"them",text:pick(["這張怎樣 好看欸","你在哪拍的"])});S.typing=false;draw()},700);
+  setTimeout(function(){ afterReply(pick(["這張怎樣 好看欸","你在哪拍的"])); },700);
 }
 function $(id){return document.getElementById(id)}
+function inviteHtml(){
+  if(!S.incoming||S.screen==="call") return "";
+  return '<div class="invite"><div class="invcard">'+
+    '<p class="gold">LINE 視訊來電</p>'+
+    face(S.media,S.mediaKind,S.theirName,"invav")+
+    "<b>"+esc(S.theirName)+"</b><p>想看你，要不要接？</p>"+
+    '<div class="invbtns"><button class="hang" id="no">掛斷</button><button class="btn" id="yes" style="width:auto;padding:0 24px;margin:0">接聽</button></div>'+
+  "</div></div>";
+}
 function draw(){
-  const app=$("app");
-  if(!app) return;
+  var app=$("app"); if(!app) return;
   if(S.screen==="setup"){
-    app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">離線網頁版</span></header>'+
+    app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">遊戲視窗</span></header>'+
     '<main class="pad">'+
-      '<div class="mascots"><img src="dino-boy.jpg" alt="恐龍寶寶男" onerror="this.style.display=\'none\'"><img src="dino-girl.jpg" alt="恐龍寶寶女" onerror="this.style.display=\'none\'"></div>'+
-      '<p class="muted">國語日常。選職業跟關係後開始。</p>'+
+      '<p class="muted">上傳形象、選語音跟個性後開始。</p>'+
+      '<div class="two">'+
+        '<div><label>你的形象</label><div class="up" id="upme">'+(S.myMedia?face(S.myMedia,S.myKind,S.myName,"fill"):"點這裡上傳你的照片或短影片")+"</div></div>"+
+        '<div><label>對方形象</label><div class="up" id="up">'+(S.media?face(S.media,S.mediaKind,S.theirName,"fill"):"點這裡上傳對方的照片或短影片")+"</div></div>"+
+      "</div>"+
       '<label>你的名字</label><input id="me" type="text" value="'+esc(S.myName)+'"/>'+
       '<label>對方名字</label><input id="them" type="text" value="'+esc(S.theirName)+'"/>'+
       '<label>對方職業</label><input id="job" type="text" value="'+esc(S.job)+'"/>'+
       '<div class="chips">'+JOBS.map(function(j){return '<button class="chip '+(S.job===j?"on":"")+'" data-job="'+j+'">'+j+"</button>"}).join("")+"</div>"+
       "<label>你們的關係</label>"+
       '<div class="rels">'+RELS.map(function(x){return '<button class="rel '+(S.relation===x[0]?"on":"")+'" data-rel="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
-      "<label>對方形象</label>"+
-      '<div class="up" id="up">'+(S.media?(S.mediaKind==="video"?'<video src="'+S.media+'" autoplay muted loop playsinline></video>':'<img src="'+S.media+'" alt="">'):"點這裡上傳照片或短影片")+"</div>"+
+      "<label>語音朗讀</label>"+
+      '<button class="rel '+(S.voiceOn?"on":"")+'" id="von">'+(S.voiceOn?"語音朗讀：開":"語音朗讀：關")+"</button>"+
+      "<label>女主語音</label>"+
+      '<div class="rels">'+VOICES.map(function(x){return '<button class="rel '+(S.voice===x[0]?"on":"")+'" data-voice="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
+      "<label>個性</label>"+
+      '<div class="rels">'+PERS.map(function(x){return '<button class="rel '+(S.personality===x[0]?"on":"")+'" data-p="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
       '<button class="btn" id="go">開始聊天</button>'+
     "</main>";
     app.querySelectorAll("[data-job]").forEach(function(b){b.onclick=function(){S.job=b.getAttribute("data-job");draw()}});
     app.querySelectorAll("[data-rel]").forEach(function(b){b.onclick=function(){S.relation=b.getAttribute("data-rel");draw()}});
+    app.querySelectorAll("[data-voice]").forEach(function(b){b.onclick=function(){S.voice=b.getAttribute("data-voice");draw()}});
+    app.querySelectorAll("[data-p]").forEach(function(b){b.onclick=function(){S.personality=b.getAttribute("data-p");draw()}});
+    $("von").onclick=function(){S.voiceOn=!S.voiceOn;draw()};
     $("me").oninput=function(e){S.myName=e.target.value};
     $("them").oninput=function(e){S.theirName=e.target.value};
     $("job").oninput=function(e){S.job=e.target.value};
-    $("up").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*,video/*";i.onchange=function(){var f=i.files[0];if(!f)return;S.media=fileUrl(f);S.mediaKind=f.type.indexOf("video/")===0?"video":"img";draw()};i.click()};
+    function pickFile(who){
+      var i=document.createElement("input"); i.type="file"; i.accept="image/*,video/*";
+      i.onchange=function(){var f=i.files[0]; if(!f)return; var k=f.type.indexOf("video/")===0?"video":"img";
+        if(who==="me"){S.myMedia=fileUrl(f);S.myKind=k} else {S.media=fileUrl(f);S.mediaKind=k} draw()};
+      i.click();
+    }
+    $("up").onclick=function(){pickFile("them")};
+    $("upme").onclick=function(){pickFile("me")};
     $("go").onclick=function(){hi();S.screen="chat";draw()};
     return;
   }
   if(S.screen==="call"){
-    var media=S.mediaKind==="video"?'<video class="fill" src="'+S.media+'" autoplay muted loop playsinline></video>':S.media?'<img class="fill" src="'+S.media+'" alt="">':'<img class="fill" src="dino-girl.jpg" alt="" onerror="this.style.display=\'none\'">';
+    var media=S.mediaKind==="video"?'<video class="fill" src="'+S.media+'" autoplay muted loop playsinline></video>':S.media?'<img class="fill" src="'+S.media+'" alt="">':face(null,null,S.theirName,"invav");
     app.innerHTML='<div class="call">'+media+'<div class="shade"></div><div class="ui">'+
       '<div class="top">'+esc(S.theirName)+" · 視訊中也可以打字</div>"+
       '<div class="logs" id="logs"></div>'+
-      '<form class="composer" id="cf"><input id="cin" placeholder="視訊中傳訊…" autocomplete="off"/><button class="send" type="submit">傳送</button></form>'+
+      '<form class="composer" id="cf"><textarea id="cin" rows="1" placeholder="視訊中傳訊…"></textarea><button class="send" type="submit">傳送</button></form>'+
       '<div class="hangwrap"><button class="hang" id="hang" type="button">掛斷</button></div>'+
     "</div></div>";
     fillLogs($("logs"));
-    $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value)};
-    $("hang").onclick=function(){S.screen="chat";S.messages.push({who:"sys",text:"通話已結束"});draw()};
+    $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value);};
+    $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.messages.push({who:"sys",text:"通話已結束"});draw()};
     $("cin").focus();
     return;
   }
-  app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">離線網頁版</span></header>'+
+  app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">遊戲視窗</span></header>'+
   '<div class="chat">'+
     '<div class="chatbar">'+
       '<button class="icon" id="back" type="button">←</button>'+
-      '<div class="av">'+(S.media&&S.mediaKind==="img"?'<img src="'+S.media+'" alt="">':'<img src="dino-girl.jpg" alt="" onerror="this.style.display=\'none\'">')+"</div>"+
+      face(S.media,S.mediaKind,S.theirName,"av")+
       '<div style="flex:1;min-width:0"><b>'+esc(S.theirName)+'</b><div class="muted">'+(S.typing?"輸入中…":"在線上")+" · "+esc(S.job)+"</div></div>"+
+      '<button class="icon '+(S.voiceOn?"on":"")+'" id="vo" type="button">'+(S.voiceOn?"語音開":"語音關")+"</button>"+
       '<button class="icon" id="wall" type="button">背景</button>'+
       '<button class="icon" id="vid" type="button">視訊</button>'+
     "</div>"+
@@ -211,30 +273,33 @@ function draw(){
     '<form class="composer" id="cf">'+
       '<button class="icon" id="smile" type="button">☺</button>'+
       '<button class="icon" id="imgb" type="button">＋</button>'+
-      '<input id="cin" placeholder="Aa" autocomplete="off"/>'+
+      '<textarea id="cin" rows="1" placeholder="輸入訊息…"></textarea>'+
       '<button class="send" type="submit">傳送</button>'+
-    "</form></div>";
+    "</form></div>"+inviteHtml();
   fillLogs($("logs"));
   $("back").onclick=function(){S.screen="setup";draw()};
-  $("vid").onclick=function(){S.screen="call";draw()};
+  $("vid").onclick=function(){S.screen="call";S.incoming=false;draw()};
+  $("vo").onclick=function(){S.voiceOn=!S.voiceOn;draw()};
   $("smile").onclick=function(){var t=$("tray"); t.hidden=!t.hidden};
   $("tray").querySelectorAll("[data-s]").forEach(function(b){b.onclick=function(){sendSticker(b.getAttribute("data-s"))}});
   $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value)};
+  $("cin").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send($("cin").value)}};
   $("imgb").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0])sendImg(fileUrl(i.files[0]))};i.click()};
   $("wall").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0]){S.wall=fileUrl(i.files[0]);draw()}};i.click()};
+  if($("yes")) $("yes").onclick=function(){S.incoming=false;S.screen="call";draw()};
+  if($("no")) $("no").onclick=function(){S.incoming=false;S.messages.push({who:"sys",text:"你拒絕了視訊"},{who:"them",text:"好喔，那先聊天"});draw()};
   $("cin").focus();
 }
 function fillLogs(box){
   box.innerHTML=S.messages.map(function(m){
     if(m.who==="sys") return '<p class="sys"><span>'+esc(m.text)+"</span></p>";
-    var inner=m.kind==="sticker"?'<div class="sticker">'+esc(m.text)+"</div>":m.kind==="image"?'<img class="pic" src="'+m.image+'" alt="">':'<div class="bub">'+esc(m.text)+"</div>";
-    return '<div class="row '+m.who+'">'+(m.who==="them"?'<div class="av">'+esc(S.theirName).slice(0,1)+"</div>":"")+"<div>"+inner+"</div></div>";
+    var inner=m.kind==="sticker"?'<div class="sticker">'+esc(m.text)+"</div>":m.kind==="image"?'<img class="pic" src="'+m.image+'" alt="">':'<div class="bub">'+esc(m.text).replace(/\n/g,"<br>")+"</div>";
+    return '<div class="row '+m.who+'">'+(m.who==="them"?face(S.media,S.mediaKind,S.theirName,"av"):"")+"<div>"+inner+"</div></div>";
   }).join("")+(S.typing?'<p class="sys"><span>輸入中…</span></p>':"");
   box.scrollTop=box.scrollHeight;
 }
-window.onerror=function(m,s,l,c,e){var n=document.getElementById("boot");if(n)n.textContent="錯誤："+m+"（第"+l+"行）"}; try{draw()}catch(e){var n=document.getElementById("boot"); if(n) n.textContent="開啟失敗："+e;}
+try{draw()}catch(e){document.getElementById("app").innerHTML="<p style='padding:24px'>開啟失敗</p>"}
 
 </script>
-</div>
 </body>
 </html>
