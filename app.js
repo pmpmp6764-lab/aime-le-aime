@@ -5,13 +5,14 @@ const VOICES=[["loli","1. 嗲嗲聲蘿莉音"],["onee","2. 御姐音"],["teen","
 const PERS=[["soft","1. 柔弱依賴"],["cute","2. 大方可愛"],["warm","3. 非常熱情"]];
 const S={
   screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",
-  voice:"teen",personality:"cute",voiceOn:true,incoming:false,isCalling:false,turns:0,pending:false,quietUntil:0,
+  voice:"teen",personality:"cute",voiceOn:true,perf:"smooth",incoming:false,isCalling:false,turns:0,pending:false,quietUntil:0,
   messages:[],typing:false,media:null,mediaKind:null,myMedia:null,myKind:null,wall:null
 };
 var ringStop=null;
 function blocked(){return S.screen==="call"||S.incoming||S.isCalling}
 function startRing(){
   stopRing();
+  if(S.perf==="save") return;
   var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
   var ctx=new AC(), stopped=false, timer=0;
   function beep(f,at,d){
@@ -43,6 +44,7 @@ function esc(s){
   });
 }
 function speak(text){
+  if(S.perf==="save") return;
   if(!S.voiceOn||!window.speechSynthesis) return;
   var u=new SpeechSynthesisUtterance(String(text).slice(0,160));
   u.lang="zh-TW";
@@ -213,6 +215,8 @@ function draw(){
       '<div class="chips">'+JOBS.map(function(j){return '<button class="chip '+(S.job===j?"on":"")+'" data-job="'+j+'">'+j+"</button>"}).join("")+"</div>"+
       "<label>你們的關係</label>"+
       '<div class="rels">'+RELS.map(function(x){return '<button class="rel '+(S.relation===x[0]?"on":"")+'" data-rel="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
+      "<label>效能</label>"+
+      '<div class="rels"><button class="rel '+(S.perf==="smooth"?"on":"")+'" id="ps">順暢（特效、鈴聲）</button><button class="rel '+(S.perf==="save"?"on":"")+'" id="pe">省電（少動畫）</button></div>'+
       "<label>語音朗讀</label>"+
       '<button class="rel '+(S.voiceOn?"on":"")+'" id="von">'+(S.voiceOn?"語音朗讀：開":"語音朗讀：關")+"</button>"+
       "<label>女主語音</label>"+
@@ -226,6 +230,8 @@ function draw(){
     app.querySelectorAll("[data-voice]").forEach(function(b){b.onclick=function(){S.voice=b.getAttribute("data-voice");draw()}});
     app.querySelectorAll("[data-p]").forEach(function(b){b.onclick=function(){S.personality=b.getAttribute("data-p");draw()}});
     $("von").onclick=function(){S.voiceOn=!S.voiceOn;draw()};
+    $("ps").onclick=function(){S.perf="smooth";draw()};
+    $("pe").onclick=function(){S.perf="save";draw()};
     $("me").oninput=function(e){S.myName=e.target.value};
     $("them").oninput=function(e){S.theirName=e.target.value};
     $("job").oninput=function(e){S.job=e.target.value};
@@ -259,7 +265,7 @@ function draw(){
     return;
   }
   app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">遊戲視窗</span></header>'+
-  '<div class="chat">'+
+  '<div class="chat'+(S.perf==="save"?" plain":"")+'">'+
     '<div class="chatbar">'+
       '<button class="icon" id="back" type="button">←</button>'+
       face(S.media,S.mediaKind,S.theirName,"av")+
