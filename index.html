@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<meta name="theme-color" content="#d4af37"/>
 <title>曖了曖了LIVE (獨享版)</title>
-<link rel="manifest" href="manifest.json"/>
 <style>
 :root{
   --line:#06c755;--bubble:#a8e063;--chat:#ffd6e3;--paper:#f7f7f2;
@@ -362,7 +360,8 @@ function draw(){
       '<p class="muted">上傳形象、選語音跟個性後開始。</p>'+
       '<div class="two">'+
         '<div><label>你的形象</label><div class="up" id="upme">'+(S.myMedia?face(S.myMedia,S.myKind,S.myName,"fill"):"點這裡上傳你的照片或短影片")+"</div></div>"+
-        '<div><label>對方形象</label><div class="up" id="up">'+(S.media?face(S.media,S.mediaKind,S.theirName,"fill"):"點這裡上傳對方的照片或短影片")+"</div></div>"+
+        '<div><label>對方頭貼（靜態）</label><div class="up" id="up">'+(S.media?face(S.media,"img",S.theirName,"fill"):"點這裡上傳頭貼")+"</div></div>"+
+        '<div><label>視訊影片（動態）</label><div class="up" id="upcall">'+(S.callVideo?'<video class="fill" src="'+S.callVideo+'" muted loop autoplay playsinline></video>':"點這裡上傳視訊，避免一片黑")+"</div></div>"+
       "</div>"+
       '<label>你的名字</label><input id="me" type="text" value="'+esc(S.myName)+'"/>'+
       '<label>對方名字</label><input id="them" type="text" value="'+esc(S.theirName)+'"/>'+
@@ -398,6 +397,11 @@ function draw(){
     }
     $("up").onclick=function(){pickFile("them")};
     $("upme").onclick=function(){pickFile("me")};
+    $("upcall").onclick=function(){
+      var i=document.createElement("input"); i.type="file"; i.accept="video/*";
+      i.onchange=function(){ if(i.files[0]){ S.callVideo=fileUrl(i.files[0]); draw(); } };
+      i.click();
+    };
     $("go").onclick=function(){hi();S.screen="list";save();draw()};
     return;
   }
@@ -415,9 +419,12 @@ function draw(){
     return;
   }
   if(S.screen==="call"){
-    var media=S.callVideo?'<video class="fill" src="'+S.callVideo+'" autoplay muted loop playsinline></video>':S.mediaKind==="video"?'<video class="fill" src="'+S.media+'" autoplay muted loop playsinline></video>':S.media?'<img class="fill" src="'+S.media+'" alt="">':face(null,null,S.theirName,"invav");
+    var media = S.callVideo
+      ? '<video class="fill" src="'+S.callVideo+'" autoplay muted loop playsinline></video><img class="fill" src="'+(S.media||"")+'" alt="" style="position:absolute;inset:0;z-index:-1">'
+      : (S.media ? '<img class="fill" src="'+S.media+'" alt="">' : face(null,null,S.theirName,"invav"));
     app.innerHTML='<div class="call">'+media+'<div class="shade"></div><div class="ui">'+
-      '<div class="top">'+esc(S.theirName)+" · 視訊中也可以打字</div>"+
+      '<div class="top"><div>'+esc(S.theirName)+(S.callVideo?" · 視訊中":" · 先顯示頭貼")+'</div>'+
+      '<button class="btn" id="upvid" type="button" style="margin:8px 0;width:auto;padding:0 16px">上傳人物影片</button></div>'+
       '<div class="logs" id="logs"></div>'+
       chipsHtml()+
       '<form class="composer" id="cf"><textarea id="cin" rows="1" placeholder="視訊中傳訊…"></textarea><button class="send" type="submit">傳送</button></form>'+
@@ -427,6 +434,11 @@ function draw(){
     boxVoice($("logs"));
     $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value);};
     $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.isCalling=false;S.quietUntil=S.turns+8;S.noVideo[S.active]=true;stopRing();S.messages.push({who:"sys",text:"通話已結束"});save();draw()};
+    if($("upvid")) $("upvid").onclick=function(){
+      var i=document.createElement("input"); i.type="file"; i.accept="video/*";
+      i.onchange=function(){ if(i.files[0]){ S.callVideo=fileUrl(i.files[0]); draw(); } };
+      i.click();
+    };
     app.querySelectorAll("[data-q]").forEach(function(b){b.onclick=function(){send(b.getAttribute("data-q"));}});
     $("cin").focus();
     $("cin").focus();
@@ -491,9 +503,6 @@ function fillLogs(box){
 }
 try{draw()}catch(e){document.getElementById("app").innerHTML="<p style='padding:24px'>開啟失敗</p>"}
 
-</script>
-<script>
-if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
 </script>
 </body>
 </html>

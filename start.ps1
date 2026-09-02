@@ -72,7 +72,11 @@ while ($listener.IsListening) {
       ".css"  { "text/css; charset=utf-8" }
       ".svg"  { "image/svg+xml" }
       ".jpg"  { "image/jpeg" }
+      ".jpeg" { "image/jpeg" }
       ".png"  { "image/png" }
+      ".mp4"  { "video/mp4" }
+      ".webm" { "video/webm" }
+      ".mov"  { "video/quicktime" }
       default { "application/octet-stream" }
     }
     $bytes = [IO.File]::ReadAllBytes($full)
