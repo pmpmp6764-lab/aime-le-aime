@@ -11,7 +11,7 @@
   --danger:#ef4444;--field:#ffffff;--gold:#d4af37;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;min-height:100dvh}
+html,body{height:100%;min-height:100dvh;overflow:hidden}
 body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:#241c28;color:var(--ink);display:flex;align-items:center;justify-content:center}
 button,a,[role=button]{cursor:pointer}
 .game{width:100%;height:100%;max-width:414px;max-height:736px;display:flex;flex-direction:column;background:var(--paper);border:3px solid var(--gold);border-radius:28px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5)}
@@ -198,7 +198,12 @@ function reply(raw){
     return r==="dating"?pick(["寶貝你吃飽沒","你想吃什麼"]):pick(["吃飽沒"]);
   }
   if(hit(t,["雨","傘","冷"])) return pick(["下雨了喔，傘帶了沒","冷的話多穿一件"]);
-  if(hit(t,["累","忙"])) return pick(["有夠累喔，先去休息","好喔，忙完再回我"]);
+  if(hit(t,["捷運","公車","塞車","遲到"])) return pick(["捷運人超多吧","到了跟我說","注意安全"]);
+  if(hit(t,["7-11","超商","小七","全聯"])) return pick(["你又去小七","超商買完早點回家"]);
+  if(hit(t,["下雨","好熱","好冷","颱風"])) return pick(["記得帶傘","多喝水","外套穿了沒"]);
+  if(hit(t,["頭痛","感冒","不舒服"])) return pick(["不舒服就去休息","藥吃了沒"]);
+  if(hit(t,["加班","下班"])) return pick(["下班了跟我說一聲","別撐太晚"]);
+  if(hit(t,["已讀"])) return pick(["我沒有故意，剛剛在忙","抱歉啦剛看到"]);
   if(inCall) return pick(["看你就好了","訊號還好嗎","不要掛啦","你那邊亮亮的"]);
   if(justHungUp) return pick(["剛看到你了","先聊天啦，等等再說","嗯嗯，我還在"]);
   if(r==="dating") return pick(["想你了","抱抱。今天好想你","寶貝你在幹嘛"]);
@@ -402,6 +407,7 @@ function draw(){
   $("tray").querySelectorAll("[data-s]").forEach(function(b){b.onclick=function(){sendSticker(b.getAttribute("data-s"))}});
   $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value)};
   $("cin").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send($("cin").value)}};
+  $("cin").oninput=function(){var l=$("logs"); if(l) l.scrollTop=l.scrollHeight;};
   $("imgb").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0])sendImg(fileUrl(i.files[0]))};i.click()};
   $("wall").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0]){S.wall=fileUrl(i.files[0]);draw()}};i.click()};
   if($("yes")) $("yes").onclick=function(){S.incoming=false;S.isCalling=true;S.screen="call";stopRing();draw()};
