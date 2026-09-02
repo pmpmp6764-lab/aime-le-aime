@@ -104,15 +104,15 @@ const STICKERS=["安","好喔","才沒有","真的假的","有夠累","笑死","
 const JOBS=["醫師","千金","總裁","COSPLAY","設計師","活動主持人","調酒師","演員","公關"];
 const RELS=[["friend","朋友"],["childhood","青梅竹馬"],["dating","熱戀中"]];
 const VOICES=[["loli","1. 嗲嗲聲蘿莉音"],["onee","2. 御姐音"],["teen","3. 青春少女音"]];
-const PERS=[["soft","1. 柔弱依賴"],["cute","2. 大方可愛"],["warm","3. 非常熱情"]];
+const DAYS=[["day","白天"],["noon","中午"],["night","黑夜"]];
 const ROSTER=[
   {id:"main",name:"小雨",job:"醫師",photo:"cast/rain.jpg",callVideo:"cast/rain.mp4",personality:"cute",voice:"teen"},
   {id:"student",name:"小安",job:"千金",photo:"cast/student.jpg",callVideo:null,personality:"cute",voice:"teen"},
-  {id:"boss",name:"雅婷",job:"總裁",photo:"cast/boss.png",callVideo:null,personality:"warm",voice:"onee"}
+  {id:"boss",name:"雅萍",job:"總裁",photo:"cast/boss.png",callVideo:null,personality:"warm",voice:"onee"}
 ];
 const S={
   screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",active:"main",
-  voice:"teen",personality:"cute",voiceOn:true,perf:"smooth",incoming:false,isCalling:false,turns:0,pending:false,quietUntil:0,
+  voice:"teen",personality:"cute",voiceOn:true,perf:"smooth",incoming:false,isCalling:false,turns:0,pending:false,quietUntil:0,dayPart:(function(){var h=new Date().getHours();return h>=5&&h<11?"day":h>=11&&h<18?"noon":"night"})(),
   messages:[],typing:false,media:"cast/rain.jpg",mediaKind:"img",callVideo:"cast/rain.mp4",myMedia:null,myKind:null,wall:null,
   noVideo:{}
 };
@@ -124,12 +124,13 @@ const S={
     if(p.relation) S.relation=p.relation;
     if(typeof p.voiceOn==="boolean") S.voiceOn=p.voiceOn;
     if(p.perf) S.perf=p.perf;
+    if(p.dayPart) S.dayPart=p.dayPart;
     if(p.active) applyCast(p.active,true);
     if(p.screen==="list"||p.screen==="chat"||p.screen==="setup") S.screen=p.screen;
   }catch(e){}
 })();
 function save(){
-  try{ localStorage.setItem("aime-offline-v1", JSON.stringify({myName:S.myName,relation:S.relation,voiceOn:S.voiceOn,perf:S.perf,active:S.active,screen:S.screen==="call"?"chat":S.screen})); }catch(e){}
+  try{ localStorage.setItem("aime-offline-v1", JSON.stringify({myName:S.myName,relation:S.relation,voiceOn:S.voiceOn,perf:S.perf,active:S.active,screen:S.screen==="call"?"chat":S.screen,dayPart:S.dayPart})); }catch(e){}
 }
 function applyCast(id, keepMsgs){
   var c=ROSTER.filter(function(x){return x.id===id})[0]||ROSTER[0];
@@ -210,7 +211,11 @@ function reply(raw){
   if(hit(t,["舔","性","床","裸","色色","做愛"])) return "這個先不要啦。我們就當聊天就好。";
   if(hit(t,["晚安","睡"])) return pick(["晚安喔","去睡啦"]);
   if(hit(t,["早安"])) return pick(["早啊，吃了沒","這麼早"]);
-  if(t==="安"||hit(t,["安安","hi","HI","嗨","哈囉"])) return pick(["安","安安","安，有事嗎"]);
+  if(t==="安"||hit(t,["安安","hi","HI","嗨","哈囉"])){
+    if(S.dayPart==="day") return pick(["早安","早啊，吃了沒"]);
+    if(S.dayPart==="noon") return pick(["中午安","吃飯沒"]);
+    return pick(["安，這麼晚還在","吃晚餐沒"]);
+  }
   if(hit(t,["在嗎","在嘛"])) return pick(["在啊","在，有事嗎"]);
   if(hit(t,["想你","喜歡你","愛你","寶貝","抱抱","親親"])) {
     if(r==="friend") return "想太多。我們是朋友";
@@ -369,6 +374,8 @@ function draw(){
       '<div class="chips">'+JOBS.map(function(j){return '<button class="chip '+(S.job===j?"on":"")+'" data-job="'+j+'">'+j+"</button>"}).join("")+"</div>"+
       "<label>你們的關係</label>"+
       '<div class="rels">'+RELS.map(function(x){return '<button class="rel '+(S.relation===x[0]?"on":"")+'" data-rel="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
+      "<label>時段（對話會跟著變）</label>"+
+      '<div class="rels">'+DAYS.map(function(x){return '<button class="rel '+(S.dayPart===x[0]?"on":"")+'" data-day="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
       "<label>效能</label>"+
       '<div class="rels"><button class="rel '+(S.perf==="smooth"?"on":"")+'" id="ps">順暢（特效、鈴聲）</button><button class="rel '+(S.perf==="save"?"on":"")+'" id="pe">省電（少動畫）</button></div>'+
       "<label>語音朗讀</label>"+
@@ -383,6 +390,7 @@ function draw(){
     app.querySelectorAll("[data-rel]").forEach(function(b){b.onclick=function(){S.relation=b.getAttribute("data-rel");draw()}});
     app.querySelectorAll("[data-voice]").forEach(function(b){b.onclick=function(){S.voice=b.getAttribute("data-voice");draw()}});
     app.querySelectorAll("[data-p]").forEach(function(b){b.onclick=function(){S.personality=b.getAttribute("data-p");draw()}});
+    app.querySelectorAll("[data-day]").forEach(function(b){b.onclick=function(){S.dayPart=b.getAttribute("data-day");draw()}});
     $("von").onclick=function(){S.voiceOn=!S.voiceOn;draw()};
     $("ps").onclick=function(){S.perf="smooth";draw()};
     $("pe").onclick=function(){S.perf="save";draw()};
@@ -407,7 +415,7 @@ function draw(){
   }
   if(S.screen==="list"){
     app.innerHTML='<header class="top"><b>好友</b><span><button class="icon" id="tochat" type="button">返回聊天室</button> <button class="icon" id="toset" type="button">設定</button></span></header>'+
-      '<p class="muted" style="padding:4px 16px">小雨 · 小安（千金）· 雅婷（總裁）　完全離線</p>'+
+      '<p class="muted" style="padding:4px 16px">小雨 · 小安（千金）· 雅萍（總裁）　完全離線</p>'+
       ROSTER.map(function(c){
         return '<button class="frow" type="button" data-id="'+c.id+'">'+
           face(c.photo,"img",c.name,"av14")+
