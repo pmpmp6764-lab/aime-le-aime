@@ -63,10 +63,19 @@ input[type=text]{width:100%;height:44px;border:1px solid #d1d5db;border-radius:1
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fill{width:100%;height:100%;object-fit:cover}
 .av-fallback{background:var(--line);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:700}
-.invite{position:absolute;inset:0;z-index:40;background:rgba(18,20,23,.55);display:flex;align-items:center;justify-content:center;padding:16px}
-.invcard{background:var(--paper);border-radius:24px;padding:28px 24px;text-align:center;width:min(360px,100%);box-shadow:0 16px 40px rgba(0,0,0,.3)}
-.invav{width:96px;height:96px;border-radius:50%;object-fit:cover;margin:12px auto;display:flex;align-items:center;justify-content:center;background:var(--line);color:#fff;font-size:32px}
-.invbtns{display:flex;justify-content:center;gap:24px;margin-top:20px;align-items:center}
+.invite{position:absolute;inset:0;z-index:40;background:#121417;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.invbg{position:absolute;inset:0;opacity:.45}
+.invbg img,.invbg video,.invbg div{width:100%;height:100%;object-fit:cover}
+.invshade{position:absolute;inset:0;background:rgba(18,20,23,.65)}
+.invui{position:relative;z-index:1;text-align:center;color:#fff;padding:28px 24px;width:100%}
+.invav{width:140px;height:140px;border-radius:50%;object-fit:cover;margin:20px auto;display:flex;align-items:center;justify-content:center;background:var(--line);color:#fff;font-size:48px;border:4px solid #06c755}
+.invbtns{display:flex;justify-content:space-between;max-width:280px;margin:48px auto 0;align-items:center}
+.answer{width:80px;height:80px;border:0;border-radius:50%;background:var(--line);color:#fff;font-weight:700;animation:pulse 1.2s ease infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(6,199,85,.7)}70%{box-shadow:0 0 0 18px rgba(6,199,85,0)}100%{box-shadow:0 0 0 0 rgba(6,199,85,0)}}
+.voice{display:flex;align-items:center;gap:10px;background:#fff;border:0;border-radius:18px;padding:8px 12px;color:var(--ink);min-width:160px}
+.vplay{width:32px;height:32px;border-radius:50%;background:var(--line);color:#fff;display:flex;align-items:center;justify-content:center}
+.vbar{flex:1;height:14px;background:repeating-linear-gradient(90deg,#06c755 0 2px,transparent 2px 5px);border-radius:4px}
+.time.wait{opacity:0}
 .chat{position:relative}
 .send{height:44px;min-width:56px;border:0;border-radius:999px;background:var(--line);color:var(--paper);font-weight:700}
 .icon{width:44px;height:44px;border:0;background:transparent;font-size:18px;color:var(--ink);flex-shrink:0}
@@ -100,9 +109,31 @@ const VOICES=[["loli","1. 嗲嗲聲蘿莉音"],["onee","2. 御姐音"],["teen","
 const PERS=[["soft","1. 柔弱依賴"],["cute","2. 大方可愛"],["warm","3. 非常熱情"]];
 const S={
   screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",
-  voice:"teen",personality:"cute",voiceOn:true,incoming:false,turns:0,
+  voice:"teen",personality:"cute",voiceOn:true,incoming:false,isCalling:false,turns:0,pending:false,
   messages:[],typing:false,media:null,mediaKind:null,myMedia:null,myKind:null,wall:null
 };
+var ringStop=null;
+function blocked(){return S.screen==="call"||S.incoming||S.isCalling}
+function startRing(){
+  stopRing();
+  var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+  var ctx=new AC(), stopped=false, timer=0;
+  function beep(f,at,d){
+    var o=ctx.createOscillator(), g=ctx.createGain();
+    o.type="sine"; o.frequency.value=f;
+    g.gain.setValueAtTime(0,at); g.gain.linearRampToValueAtTime(0.12,at+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,at+d);
+    o.connect(g); g.connect(ctx.destination); o.start(at); o.stop(at+d+0.02);
+  }
+  function cycle(){
+    if(stopped) return;
+    var t=ctx.currentTime; beep(880,t,0.18); beep(1174,t+0.2,0.18); beep(880,t+0.4,0.18); beep(1174,t+0.6,0.22);
+    timer=setTimeout(cycle,1400);
+  }
+  ctx.resume(); cycle();
+  ringStop=function(){ stopped=true; clearTimeout(timer); ctx.close(); ringStop=null; };
+}
+function stopRing(){ if(ringStop) ringStop(); }
 
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function hit(t,ks){return ks.some(k=>t.includes(k))}
@@ -161,45 +192,70 @@ function hi(){
     text=S.personality==="soft"?"你在嗎…想看你。可以視訊嗎":S.personality==="warm"?"安安！想你了啦。快接視訊":"安安，剛下班。想你了。要不要視訊一下";
   } else if(S.relation==="childhood") text="安安，好久不見喔。你在幹嘛";
   S.messages=[{who:"sys",text:"與 "+S.theirName+" 的對話　"+S.job+"　"+rel},{who:"them",text:text}];
-  S.turns=0; S.incoming=false;
-  if(S.relation==="dating") setTimeout(function(){ if(S.screen==="chat"){ S.incoming=true; draw(); } },2200);
+  S.turns=0; S.incoming=false; S.isCalling=false; S.pending=false;
+  if(S.relation==="dating") setTimeout(function(){
+    if(S.screen==="chat"&&!blocked()){ S.incoming=true; startRing(); draw(); }
+  },2200);
 }
 function fileUrl(f){return URL.createObjectURL(f)}
 function afterReply(text){
   S.turns+=1;
-  if(S.screen==="chat"&&S.relation==="dating"&&(text.indexOf("視訊")>=0||S.turns%4===0)){
-    S.incoming=true;
-    if(text.indexOf("視訊")<0) text+="\n想看你，接一下嘛";
-  }
-  S.messages.push({who:"them",text:text}); S.typing=false; draw(); speak(text);
+  var canRing=S.screen==="chat"&&S.relation==="dating"&&!S.isCalling&&!S.incoming&&(text.indexOf("視訊")>=0||S.turns%4===0);
+  if(canRing&&text.indexOf("視訊")<0) text+="\n想看你，接一下嘛";
+  var voice=S.screen!=="call"&&S.relation==="dating"&&text.length<36&&Math.random()<0.4;
+  S.messages.push({who:"them",text:text,kind:voice?"voice":"text",secs:voice?Math.max(2,Math.min(12,Math.round(text.length/4))):undefined});
+  S.typing=false; S.pending=false;
+  if(canRing){ S.incoming=true; startRing(); }
+  draw();
+  if(!voice&&S.voiceOn&&S.screen!=="call") speak(text);
+}
+function delayThen(prompt, mine){
+  S.pending=true; draw();
+  setTimeout(function(){
+    mine.read=true; draw();
+    setTimeout(function(){
+      S.typing=true; draw();
+      setTimeout(function(){ afterReply(reply(prompt)); },700);
+    },400);
+  },900+Math.random()*900);
 }
 function send(text){
-  var t=(text||"").trim(); if(!t||S.typing) return;
+  var t=(text||"").trim(); if(!t||S.typing||S.pending) return;
   if(S.incoming&&/好啊|好呀|可以|接|開/.test(t)){
-    S.messages.push({who:"me",text:t}); S.incoming=false; S.screen="call"; draw(); return;
+    S.messages.push({who:"me",text:t,read:true}); S.incoming=false; S.isCalling=true; S.screen="call"; stopRing(); draw(); return;
   }
-  S.messages.push({who:"me",text:t}); S.typing=true; draw();
-  setTimeout(function(){ afterReply(reply(t)); },700);
+  var mine={who:"me",text:t,read:false,kind:"text"};
+  S.messages.push(mine);
+  delayThen(t, mine);
 }
 function sendSticker(label){
-  if(S.typing) return;
-  S.messages.push({who:"me",kind:"sticker",text:label}); S.typing=true; draw();
-  setTimeout(function(){ afterReply(label==="真的假的"?"啥":"是喔"); },700);
+  if(S.typing||S.pending) return;
+  var mine={who:"me",kind:"sticker",text:label,read:false};
+  S.messages.push(mine);
+  delayThen(label==="真的假的"?"啥":"（貼圖）", mine);
 }
 function sendImg(url){
-  if(S.typing) return;
-  S.messages.push({who:"me",kind:"image",image:url,text:""}); S.typing=true; draw();
-  setTimeout(function(){ afterReply(pick(["這張怎樣 好看欸","你在哪拍的"])); },700);
+  if(S.typing||S.pending) return;
+  var mine={who:"me",kind:"image",image:url,text:"",read:false};
+  S.messages.push(mine);
+  delayThen("（我傳了一張照片給你）", mine);
 }
 function $(id){return document.getElementById(id)}
 function inviteHtml(){
   if(!S.incoming||S.screen==="call") return "";
-  return '<div class="invite"><div class="invcard">'+
-    '<p class="gold">LINE 視訊來電</p>'+
-    face(S.media,S.mediaKind,S.theirName,"invav")+
-    "<b>"+esc(S.theirName)+"</b><p>想看你，要不要接？</p>"+
-    '<div class="invbtns"><button class="hang" id="no">掛斷</button><button class="btn" id="yes" style="width:auto;padding:0 24px;margin:0">接聽</button></div>'+
-  "</div></div>";
+  return '<div class="invite">'+
+    '<div class="invbg">'+face(S.media,S.mediaKind,S.theirName,"fill")+"</div>"+
+    '<div class="invshade"></div>'+
+    '<div class="invui">'+
+      '<p class="gold">LINE 視訊來電</p>'+
+      face(S.media,S.mediaKind,S.theirName,"invav")+
+      "<b>"+esc(S.theirName)+"</b>"+
+      "<p>"+esc(S.theirName)+" 正在撥打視訊通話給您…</p>"+
+      '<div class="invbtns">'+
+        '<button class="hang" id="no" type="button">拒絕</button>'+
+        '<button class="answer" id="yes" type="button">接聽</button>'+
+      "</div>"+
+    "</div></div>";
 }
 function draw(){
   var app=$("app"); if(!app) return;
@@ -253,8 +309,9 @@ function draw(){
       '<div class="hangwrap"><button class="hang" id="hang" type="button">掛斷</button></div>'+
     "</div></div>";
     fillLogs($("logs"));
+    boxVoice($("logs"));
     $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value);};
-    $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.messages.push({who:"sys",text:"通話已結束"});draw()};
+    $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.isCalling=false;stopRing();S.messages.push({who:"sys",text:"通話已結束"});draw()};
     $("cin").focus();
     return;
   }
@@ -278,7 +335,7 @@ function draw(){
     "</form></div>"+inviteHtml();
   fillLogs($("logs"));
   $("back").onclick=function(){S.screen="setup";draw()};
-  $("vid").onclick=function(){S.screen="call";S.incoming=false;draw()};
+  $("vid").onclick=function(){S.screen="call";S.incoming=false;S.isCalling=true;stopRing();draw()};
   $("vo").onclick=function(){S.voiceOn=!S.voiceOn;draw()};
   $("smile").onclick=function(){var t=$("tray"); t.hidden=!t.hidden};
   $("tray").querySelectorAll("[data-s]").forEach(function(b){b.onclick=function(){sendSticker(b.getAttribute("data-s"))}});
@@ -286,15 +343,27 @@ function draw(){
   $("cin").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send($("cin").value)}};
   $("imgb").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0])sendImg(fileUrl(i.files[0]))};i.click()};
   $("wall").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0]){S.wall=fileUrl(i.files[0]);draw()}};i.click()};
-  if($("yes")) $("yes").onclick=function(){S.incoming=false;S.screen="call";draw()};
-  if($("no")) $("no").onclick=function(){S.incoming=false;S.messages.push({who:"sys",text:"你拒絕了視訊"},{who:"them",text:"好喔，那先聊天"});draw()};
+  if($("yes")) $("yes").onclick=function(){S.incoming=false;S.isCalling=true;S.screen="call";stopRing();draw()};
+  if($("no")) $("no").onclick=function(){S.incoming=false;S.isCalling=false;stopRing();S.messages.push({who:"sys",text:"你拒絕了視訊"},{who:"them",text:"好喔，那先聊天"});draw()};
+  boxVoice($("logs"));
   $("cin").focus();
+}
+function boxVoice(box){
+  if(!box) return;
+  box.querySelectorAll("[data-voice]").forEach(function(b){
+    b.onclick=function(){ speak(b.getAttribute("data-voice")||""); };
+  });
 }
 function fillLogs(box){
   box.innerHTML=S.messages.map(function(m){
     if(m.who==="sys") return '<p class="sys"><span>'+esc(m.text)+"</span></p>";
-    var inner=m.kind==="sticker"?'<div class="sticker">'+esc(m.text)+"</div>":m.kind==="image"?'<img class="pic" src="'+m.image+'" alt="">':'<div class="bub">'+esc(m.text).replace(/\n/g,"<br>")+"</div>";
-    return '<div class="row '+m.who+'">'+(m.who==="them"?face(S.media,S.mediaKind,S.theirName,"av"):"")+"<div>"+inner+"</div></div>";
+    var inner;
+    if(m.kind==="sticker") inner='<div class="sticker">'+esc(m.text)+"</div>";
+    else if(m.kind==="image") inner='<img class="pic" src="'+m.image+'" alt="">';
+    else if(m.kind==="voice") inner='<button class="voice" type="button" data-voice="'+esc(m.text)+'"><span class="vplay">▶</span><span class="vbar"></span><span>'+(m.secs||4)+'"</span></button>';
+    else inner='<div class="bub">'+esc(m.text).replace(/\n/g,"<br>")+"</div>";
+    var stamp=m.who==="me"?(m.read===false?'<span class="time wait">'+""+"</span>":'<span class="time">已讀</span>'):'<span class="time">　</span>';
+    return '<div class="row '+m.who+'">'+(m.who==="them"?face(S.media,S.mediaKind,S.theirName,"av"):"")+"<div>"+inner+stamp+"</div></div>";
   }).join("")+(S.typing?'<p class="sys"><span>輸入中…</span></p>':"");
   box.scrollTop=box.scrollHeight;
 }
