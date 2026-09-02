@@ -1,8 +1,10 @@
-Ambiguous LIVE - desktop game window
-====================================
-1. Extract zip to Desktop
-2. Double-click START.bat
-3. A game window (no address bar) will open
-4. Keep the black console window open while playing
+曖了曖了LIVE（獨享版）離線包
+==============================
+1. 解壓縮到桌面
+2. 點兩下 START.bat
+3. 會跳出金色遊戲視窗（不要關黑色視窗）
 
-Need Chrome or Edge.
+需要 Chrome 或 Edge。
+
+小雨／小安／雅婷都有預設頭貼，點設定裡的照片即可更換。
+小雨視訊預設在 cast/rain.mp4。

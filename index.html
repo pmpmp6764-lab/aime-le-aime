@@ -113,7 +113,7 @@ const PERS=[["soft","1. 柔弱依賴"],["cute","2. 大方可愛"],["warm","3. �
 const S={
   screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",
   voice:"teen",personality:"cute",voiceOn:true,perf:"smooth",incoming:false,isCalling:false,turns:0,pending:false,quietUntil:0,
-  messages:[],typing:false,media:null,mediaKind:null,myMedia:null,myKind:null,wall:null
+  messages:[],typing:false,media:"cast/rain.jpg",mediaKind:"img",callVideo:"cast/rain.mp4",myMedia:null,myKind:null,wall:null
 };
 var ringStop=null;
 function blocked(){return S.screen==="call"||S.incoming||S.isCalling}
@@ -363,7 +363,7 @@ function draw(){
     return;
   }
   if(S.screen==="call"){
-    var media=S.mediaKind==="video"?'<video class="fill" src="'+S.media+'" autoplay muted loop playsinline></video>':S.media?'<img class="fill" src="'+S.media+'" alt="">':face(null,null,S.theirName,"invav");
+    var media=S.callVideo?'<video class="fill" src="'+S.callVideo+'" autoplay muted loop playsinline></video>':S.mediaKind==="video"?'<video class="fill" src="'+S.media+'" autoplay muted loop playsinline></video>':S.media?'<img class="fill" src="'+S.media+'" alt="">':face(null,null,S.theirName,"invav");
     app.innerHTML='<div class="call">'+media+'<div class="shade"></div><div class="ui">'+
       '<div class="top">'+esc(S.theirName)+" · 視訊中也可以打字</div>"+
       '<div class="logs" id="logs"></div>'+
