@@ -5,7 +5,7 @@ const VOICES=[["loli","1. 嗲嗲聲蘿莉音"],["onee","2. 御姐音"],["teen","
 const PERS=[["soft","1. 柔弱依賴"],["cute","2. 大方可愛"],["warm","3. 非常熱情"]];
 const S={
   screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",
-  voice:"teen",personality:"cute",voiceOn:true,incoming:false,isCalling:false,turns:0,pending:false,
+  voice:"teen",personality:"cute",voiceOn:true,incoming:false,isCalling:false,turns:0,pending:false,quietUntil:0,
   messages:[],typing:false,media:null,mediaKind:null,myMedia:null,myKind:null,wall:null
 };
 var ringStop=null;
@@ -62,23 +62,33 @@ function face(url,kind,name,cls){
   return '<div class="'+cls+' av-fallback">'+esc(name).slice(0,1)+"</div>";
 }
 function reply(raw){
-  var t=raw.trim(), r=S.relation, job=S.job||"上班族", p=S.personality;
+  var t=raw.trim(), r=S.relation, p=S.personality;
+  var inCall=S.screen==="call"||S.isCalling;
+  var justHungUp=!inCall&&S.turns<S.quietUntil;
   if(!t) return p==="soft"?"嗯…你要說什麼":p==="warm"?"講啊，我在聽":"蛤？你要說什麼";
   if(hit(t,["舔","性","床","裸","色色","做愛"])) return "這個先不要啦。我們就當聊天就好。";
-  if(hit(t,["晚安","睡"])) return r==="dating"?pick(["晚安喔。想你","去睡啦，明天視訊"]):pick(["晚安喔","去睡啦"]);
+  if(hit(t,["晚安","睡"])) return pick(["晚安喔","去睡啦"]);
   if(hit(t,["早安"])) return pick(["早啊，吃了沒","這麼早"]);
   if(t==="安"||hit(t,["安安","hi","HI","嗨","哈囉"])) return pick(["安","安安","安，有事嗎"]);
   if(hit(t,["在嗎","在嘛"])) return pick(["在啊","在，有事嗎"]);
   if(hit(t,["想你","喜歡你","愛你","寶貝","抱抱","親親"])) {
     if(r==="friend") return "想太多。我們是朋友";
-    if(r==="dating") return pick(["想你啊","抱抱。想看你","寶貝你很會講。接一下視訊好不好"]);
+    if(inCall) return pick(["看你就好了","不要掛啦","看著我"]);
+    if(justHungUp) return pick(["剛看到你了還想你","先聊天啦"]);
+    if(r==="dating") return pick(["想你啊","抱抱"]);
     return pick(["才沒有想你。好啦有一點點"]);
   }
   if(hit(t,["真的假的"])) return "啥";
-  if(hit(t,["視訊","通話","看你"])) return r==="dating"?pick(["想看你，接一下嘛","快接，我想看你"]):pick(["好啊，你開我就接"]);
-  if(hit(t,["吃","餓"])) return r==="dating"?pick(["寶貝你吃飽沒","你想吃什麼"]):pick(["吃飽沒","你想吃什麼"]);
+  if(hit(t,["視訊","通話","看你"])) {
+    if(inCall) return pick(["我們不是正在講嗎 傻眼","已經在了好不好","訊號還好嗎"]);
+    if(justHungUp) return pick(["剛講完欸，先聊天啦","等等再視訊"]);
+    return r==="dating"?pick(["想看你，接一下嘛","快接，我想看你"]):pick(["好啊，你開我就接"]);
+  }
+  if(hit(t,["吃","餓"])) return r==="dating"?pick(["寶貝你吃飽沒","你想吃什麼"]):pick(["吃飽沒"]);
   if(hit(t,["累","忙"])) return pick(["有夠累喔，先去休息","好喔，忙完再回我"]);
-  if(r==="dating") return pick(["想你了","抱抱。今天好想你","要不要視訊，想看你","寶貝你在幹嘛"]);
+  if(inCall) return pick(["看你就好了","訊號還好嗎","不要掛啦","你那邊亮亮的"]);
+  if(justHungUp) return pick(["剛看到你了","先聊天啦，等等再說","嗯嗯，我還在"]);
+  if(r==="dating") return pick(["想你了","抱抱。今天好想你","寶貝你在幹嘛"]);
   return pick(["是喔","然後呢","這樣喔","好喔","哈哈好","可以啊"]);
 }
 function hi(){
@@ -88,7 +98,7 @@ function hi(){
     text=S.personality==="soft"?"你在嗎…想看你。可以視訊嗎":S.personality==="warm"?"安安！想你了啦。快接視訊":"安安，剛下班。想你了。要不要視訊一下";
   } else if(S.relation==="childhood") text="安安，好久不見喔。你在幹嘛";
   S.messages=[{who:"sys",text:"與 "+S.theirName+" 的對話　"+S.job+"　"+rel},{who:"them",text:text}];
-  S.turns=0; S.incoming=false; S.isCalling=false; S.pending=false;
+  S.turns=0; S.incoming=false; S.isCalling=false; S.pending=false; S.quietUntil=0;
   if(S.relation==="dating") setTimeout(function(){
     if(S.screen==="chat"&&!blocked()){ S.incoming=true; startRing(); draw(); }
   },2200);
@@ -96,7 +106,13 @@ function hi(){
 function fileUrl(f){return URL.createObjectURL(f)}
 function afterReply(text){
   S.turns+=1;
-  var canRing=S.screen==="chat"&&S.relation==="dating"&&!S.isCalling&&!S.incoming&&(text.indexOf("視訊")>=0||S.turns%4===0);
+  var inCall=S.screen==="call"||S.isCalling;
+  var cooling=S.turns<S.quietUntil;
+  if(inCall||cooling){
+    text=String(text).replace(/要不要(開)?視訊[一下嘛好不好啦喔]*/g,"").replace(/開視訊/g,"").replace(/接一下嘛/g,"").trim();
+    if(!text) text=inCall?"看你就好了":"嗯嗯，我在";
+  }
+  var canRing=S.screen==="chat"&&S.relation==="dating"&&!S.isCalling&&!S.incoming&&!cooling&&S.turns>0&&S.turns%8===0;
   if(canRing&&text.indexOf("視訊")<0) text+="\n想看你，接一下嘛";
   var voice=S.screen!=="call"&&S.relation==="dating"&&text.length<36&&Math.random()<0.4;
   S.messages.push({who:"them",text:text,kind:voice?"voice":"text",secs:voice?Math.max(2,Math.min(12,Math.round(text.length/4))):undefined});
@@ -207,7 +223,7 @@ function draw(){
     fillLogs($("logs"));
     boxVoice($("logs"));
     $("cf").onsubmit=function(e){e.preventDefault();send($("cin").value);};
-    $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.isCalling=false;stopRing();S.messages.push({who:"sys",text:"通話已結束"});draw()};
+    $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.isCalling=false;S.quietUntil=S.turns+8;stopRing();S.messages.push({who:"sys",text:"通話已結束"});draw()};
     $("cin").focus();
     return;
   }
