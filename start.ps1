@@ -24,7 +24,7 @@ function Open-GameWindow([string]$target) {
       Start-Process -FilePath $b -ArgumentList @(
         "--new-window",
         "--app=$target",
-        "--window-size=1180,800",
+        "--window-size=430,780",
         "--window-position=80,40",
         "--disable-features=TranslateUI"
       )

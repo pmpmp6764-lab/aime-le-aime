@@ -86,7 +86,11 @@ function reply(raw){
     if(justHungUp) return pick(["剛講完欸，先聊天啦","等等再視訊"]);
     return r==="dating"?pick(["想看你，接一下嘛","快接，我想看你"]):pick(["好啊，你開我就接"]);
   }
-  if(hit(t,["吃","餓"])) return r==="dating"?pick(["寶貝你吃飽沒","你想吃什麼"]):pick(["吃飽沒"]);
+  if(hit(t,["吃","餓"])) {
+    if(hit(t,["吃了","吃飽","剛吃"])) return pick(["好，有吃就好","那記得喝水"]);
+    return r==="dating"?pick(["寶貝你吃飽沒","你想吃什麼"]):pick(["吃飽沒"]);
+  }
+  if(hit(t,["雨","傘","冷"])) return pick(["下雨了喔，傘帶了沒","冷的話多穿一件"]);
   if(hit(t,["累","忙"])) return pick(["有夠累喔，先去休息","好喔，忙完再回我"]);
   if(inCall) return pick(["看你就好了","訊號還好嗎","不要掛啦","你那邊亮亮的"]);
   if(justHungUp) return pick(["剛看到你了","先聊天啦，等等再說","嗯嗯，我還在"]);
