@@ -1,41 +1,19 @@
 $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $root
 $html = Join-Path $root "index.html"
 try { $host.UI.RawUI.WindowTitle = "曖了曖了LIVE" } catch {}
 
 if (-not (Test-Path -LiteralPath $html)) {
-  Add-Type -AssemblyName System.Windows.Forms
-  [System.Windows.Forms.MessageBox]::Show("找不到 index.html，請先解壓縮再點 START.bat。","曖了曖了LIVE") | Out-Null
+  Write-Host "找不到 index.html，請先解壓縮。"
+  Start-Sleep -Seconds 4
   exit 1
-}
-
-function Find-Port {
-  param([int]$from = 18765, [int]$to = 18785)
-  foreach ($p in $from..$to) {
-    try {
-      $l = New-Object System.Net.Sockets.TcpListener([Net.IPAddress]::Loopback, $p)
-      $l.Start()
-      $l.Stop()
-      return $p
-    } catch {}
-  }
-  return 18765
 }
 
 function Open-GameWindow([string]$target) {
   $profile = Join-Path $env:TEMP "aime-le-aime-profile"
-  New-Item -ItemType Directory -Force -Path $profile | Out-Null
-  $args = @(
-    "--app=$target",
-    "--window-size=430,780",
-    "--window-position=80,40",
-    "--user-data-dir=$profile",
-    "--no-first-run",
-    "--no-default-browser-check",
-    "--disable-features=TranslateUI,InfiniteSessionRestore",
-    "--disable-session-crashed-bubble",
-    "--disable-infobars"
-  )
+  try { New-Item -ItemType Directory -Force -Path $profile | Out-Null } catch {}
+  $arg = "--new-window --app=`"$target`" --window-size=430,780 --window-position=80,40 --user-data-dir=`"$profile`" --no-first-run --no-default-browser-check --disable-features=TranslateUI"
   $browsers = @(
     "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe",
     "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
@@ -45,11 +23,13 @@ function Open-GameWindow([string]$target) {
   )
   foreach ($b in $browsers) {
     if (Test-Path -LiteralPath $b) {
-      Start-Process -FilePath $b -ArgumentList $args | Out-Null
+      Write-Host "開啟遊戲視窗..."
+      Start-Process -FilePath $b -ArgumentList $arg
       return $true
     }
   }
-  Start-Process $target | Out-Null
+  Write-Host "找不到 Chrome / Edge，改用檔案開啟。"
+  Start-Process $html
   return $false
 }
 
@@ -60,13 +40,11 @@ function MimeOf([string]$ext) {
     ".css"  { "text/css; charset=utf-8" }
     ".svg"  { "image/svg+xml" }
     ".jpg"  { "image/jpeg" }
-    ".jpeg" { "image/jpeg" }
     ".png"  { "image/png" }
     ".gif"  { "image/gif" }
     ".webp" { "image/webp" }
     ".mp4"  { "video/mp4" }
     ".webm" { "video/webm" }
-    ".mov"  { "video/quicktime" }
     ".json" { "application/json; charset=utf-8" }
     default { "application/octet-stream" }
   }
@@ -110,30 +88,33 @@ function Send-File($ctx, [string]$full, [string]$mime) {
   }
 }
 
-$mutex = New-Object System.Threading.Mutex($false, "Global\AimeLeAimeLive")
-$owned = $false
-try { $owned = $mutex.WaitOne(0) } catch { $owned = $true }
+$port = 18765
+$ok = $false
+foreach ($p in 18765..18785) {
+  try {
+    $listener = New-Object System.Net.HttpListener
+    $listener.Prefixes.Add("http://127.0.0.1:$p/")
+    $listener.Start()
+    $port = $p
+    $ok = $true
+    break
+  } catch {
+    try { $listener.Close() } catch {}
+    $listener = $null
+  }
+}
 
-$port = Find-Port
+if (-not $ok) {
+  Write-Host "本機伺服器開不起來，改直接開檔案。"
+  Open-GameWindow ([IO.Path]::GetFullPath($html)) | Out-Null
+  Write-Host "遊戲視窗應已出現。這個視窗可以縮小。"
+  Start-Sleep -Seconds 8
+  exit 0
+}
+
 $url = "http://127.0.0.1:$port/index.html"
-$prefix = "http://127.0.0.1:$port/"
-
-if (-not $owned) {
-  Open-GameWindow $url | Out-Null
-  exit 0
-}
-
-$listener = $null
-try {
-  $listener = New-Object System.Net.HttpListener
-  $listener.Prefixes.Add($prefix)
-  $listener.Start()
-} catch {
-  Open-GameWindow $html | Out-Null
-  exit 0
-}
-
-Start-Sleep -Milliseconds 250
+Write-Host "遊戲視窗開啟中（請留著這個黑窗）。"
+Start-Sleep -Milliseconds 200
 Open-GameWindow $url | Out-Null
 
 $rootFull = [IO.Path]::GetFullPath($root)
@@ -153,8 +134,7 @@ while ($listener.IsListening) {
       $ctx.Response.Close()
       continue
     }
-    $mime = MimeOf ([IO.Path]::GetExtension($full).ToLowerInvariant())
-    Send-File $ctx $full $mime
+    Send-File $ctx $full (MimeOf ([IO.Path]::GetExtension($full).ToLowerInvariant()))
   } catch {
     Start-Sleep -Milliseconds 80
   }
