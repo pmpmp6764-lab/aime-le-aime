@@ -1,40 +1,74 @@
 const STICKERS=["安","好喔","才沒有","真的假的","有夠累","笑死","蛤","先這樣","吃飯沒","在忙"];
-const JOBS=["醫師","千金","總裁","COSPLAY","設計師","活動主持人","調酒師","演員","公關"];
 const RELS=[["friend","朋友"],["childhood","青梅竹馬"],["dating","熱戀中"]];
-const VOICES=[["loli","1. 嗲嗲聲蘿莉音"],["onee","2. 御姐音"],["teen","3. 青春少女音"]];
+const VOICES=[["loli","嗲嗲聲"],["onee","御姐音"],["teen","青春少女音"]];
+const PERS=[["soft","柔弱依賴"],["cute","大方可愛"],["warm","非常熱情"]];
 const DAYS=[["day","白天"],["noon","中午"],["night","黑夜"]];
-const ROSTER=[
-  {id:"main",name:"小雨",job:"醫師",photo:"cast/rain.jpg",callVideo:"cast/rain.mp4",personality:"cute",voice:"teen"},
-  {id:"student",name:"小安",job:"千金",photo:"cast/student.jpg",callVideo:null,personality:"cute",voice:"teen"},
-  {id:"boss",name:"雅萍",job:"總裁",photo:"cast/boss.png",callVideo:null,personality:"warm",voice:"onee"}
+const WEEK=["週一","週二","週三","週四","週五","週六","週日"];
+const PLANS=[
+  {d:0,who:"a",title:"一起吃晚飯",place:"家附近"},
+  {d:1,who:"b",title:"散步聊天",place:"公園"},
+  {d:2,who:"c",title:"喝杯東西",place:"咖啡店"},
+  {d:3,who:"a",title:"下雨接送",place:"捷運出口"},
+  {d:4,who:"b",title:"週末約會",place:"河濱"},
+  {d:5,who:"c",title:"見一面",place:"公司樓下"},
+  {d:6,who:"a",title:"賴床視訊",place:"家裡"}
 ];
+function emptySlot(id,n){
+  return {id:id,name:"角色"+n,job:"角色卡",photo:null,callVideo:null,personality:"cute",voice:"teen",card:null,affection:20};
+}
+const ROSTER=[emptySlot("a","一"),emptySlot("b","二"),emptySlot("c","三")];
+function clockDay(){var h=new Date().getHours();return h>=5&&h<11?"day":h>=11&&h<18?"noon":"night"}
+function clockWeek(){var d=new Date().getDay();return d===0?6:d-1}
 const S={
-  screen:"setup",myName:"我",theirName:"小雨",job:"醫師",relation:"dating",active:"main",
-  voice:"teen",personality:"cute",voiceOn:true,perf:"smooth",incoming:false,isCalling:false,turns:0,pending:false,quietUntil:0,dayPart:(function(){var h=new Date().getHours();return h>=5&&h<11?"day":h>=11&&h<18?"noon":"night"})(),
-  messages:[],typing:false,media:"cast/rain.jpg",mediaKind:"img",callVideo:"cast/rain.mp4",myMedia:null,myKind:null,wall:null,
+  screen:"setup",myName:"我",theirName:"角色一",job:"角色卡",relation:"dating",active:"a",
+  voice:"teen",personality:"cute",voiceOn:true,perf:"smooth",incoming:false,isCalling:false,turns:0,pending:false,quietUntil:0,
+  dayPart:clockDay(),weekday:clockWeek(),affection:20,card:null,world:[],note:"",
+  messages:[],typing:false,media:null,mediaKind:null,callVideo:null,myMedia:null,myKind:null,wall:null,
   noVideo:{}
 };
 (function loadSave(){
   try{
-    var p=JSON.parse(localStorage.getItem("aime-offline-v1")||"null");
+    var p=JSON.parse(localStorage.getItem("aime-offline-v2")||"null");
     if(!p) return;
     if(p.myName) S.myName=p.myName;
     if(p.relation) S.relation=p.relation;
     if(typeof p.voiceOn==="boolean") S.voiceOn=p.voiceOn;
     if(p.perf) S.perf=p.perf;
     if(p.dayPart) S.dayPart=p.dayPart;
+    if(typeof p.weekday==="number") S.weekday=p.weekday;
+    if(p.note) S.note=p.note;
+    if(p.world) S.world=p.world;
+    if(p.roster){
+      p.roster.forEach(function(r,i){
+        if(!ROSTER[i]) return;
+        if(r.name) ROSTER[i].name=r.name;
+        if(r.card) ROSTER[i].card=r.card;
+        if(typeof r.affection==="number") ROSTER[i].affection=r.affection;
+      });
+    }
     if(p.active) applyCast(p.active,true);
-    if(p.screen==="list"||p.screen==="chat"||p.screen==="setup") S.screen=p.screen;
+    if(p.screen==="list"||p.screen==="chat"||p.screen==="setup"||p.screen==="cal") S.screen=p.screen;
   }catch(e){}
 })();
 function save(){
-  try{ localStorage.setItem("aime-offline-v1", JSON.stringify({myName:S.myName,relation:S.relation,voiceOn:S.voiceOn,perf:S.perf,active:S.active,screen:S.screen==="call"?"chat":S.screen,dayPart:S.dayPart})); }catch(e){}
+  try{
+    localStorage.setItem("aime-offline-v2", JSON.stringify({
+      myName:S.myName,relation:S.relation,voiceOn:S.voiceOn,perf:S.perf,active:S.active,
+      screen:S.screen==="call"?"chat":S.screen,dayPart:S.dayPart,weekday:S.weekday,note:S.note,world:S.world,
+      roster:ROSTER.map(function(r){return {name:r.name,card:r.card,affection:r.affection}})
+    }));
+  }catch(e){}
 }
 function applyCast(id, keepMsgs){
   var c=ROSTER.filter(function(x){return x.id===id})[0]||ROSTER[0];
   S.active=c.id; S.theirName=c.name; S.job=c.job; S.personality=c.personality; S.voice=c.voice;
-  S.media=c.photo; S.mediaKind="img"; S.callVideo=c.callVideo;
+  S.media=c.photo; S.mediaKind=c.photo?"img":null; S.callVideo=c.callVideo; S.card=c.card; S.affection=c.affection||20;
   if(!keepMsgs){ S.messages=[]; hi(); }
+}
+function syncActive(){
+  var c=ROSTER.filter(function(x){return x.id===S.active})[0];
+  if(!c) return;
+  c.name=S.theirName; c.photo=S.media; c.callVideo=S.callVideo; c.card=S.card; c.affection=S.affection;
 }
 function blocked(){return S.screen==="call"||S.incoming||S.isCalling}
 var ringStop=null;
@@ -59,18 +93,97 @@ function startRing(){
   ringStop=function(){ stopped=true; clearTimeout(timer); ctx.close(); ringStop=null; };
 }
 function stopRing(){ if(ringStop) ringStop(); }
-
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
-function hit(t,ks){return ks.some(k=>t.includes(k))}
+function hit(t,ks){return ks.some(function(k){return t.indexOf(k)>=0})}
 function esc(s){
   return String(s).replace(/[&<>"']/g,function(c){
-    if(c==="&") return "\u0026amp;";
-    if(c==="<") return "\u0026lt;";
-    if(c===">") return "\u0026gt;";
-    if(c==='"') return "\u0026quot;";
-    return "\u0026#39;";
+    if(c==="&") return "&";
+    if(c==="<") return "<";
+    if(c===">") return ">";
+    if(c==='"') return """;
+    return "&#39;";
   });
 }
+function loveLabel(n){return n>=90?"熱戀":n>=70?"很心動":n>=50?"曖昧中":n>=30?"有好感":"剛認識"}
+function bumpLove(t){
+  var n=16;
+  if(/想你|喜歡|愛|抱抱|早安|晚安|吃飯|約會/.test(t)) n+=8;
+  S.affection=Math.min(100, S.affection+n);
+  syncActive();
+}
+
+function latin1(u){var s="";for(var i=0;i<u.length;i++) s+=String.fromCharCode(u[i]);return s}
+function parsePngChara(buf){
+  var u=new Uint8Array(buf);
+  if(u.length<24||u[0]!==137||u[1]!==80) return null;
+  var view=new DataView(buf), off=8, found=null;
+  while(off+12<=u.length){
+    var len=view.getUint32(off);
+    var type=String.fromCharCode(u[off+4],u[off+5],u[off+6],u[off+7]);
+    var start=off+8, end=start+len;
+    if(end+4>u.length) break;
+    if(type==="tEXt"||type==="iTXt"){
+      var slice=u.subarray(start,end), z=0;
+      while(z<slice.length&&slice[z]!==0) z++;
+      var key=latin1(slice.subarray(0,z));
+      var val=latin1(slice.subarray(z+1));
+      if(key==="chara"||key==="ccv3"){
+        try{ found=decodeURIComponent(escape(atob(val.replace(/\s/g,"")))); }
+        catch(e){ try{ found=atob(val.replace(/\s/g,"")); }catch(e2){ found=val; } }
+        if(key==="ccv3") break;
+      }
+    }
+    if(type==="IEND") break;
+    off=end+4;
+  }
+  return found;
+}
+function asCard(raw){
+  var d=(raw&&raw.data&&typeof raw.data==="object")?raw.data:raw||{};
+  function str(k){return String(d[k]||raw[k]||"").trim()}
+  return {
+    name:str("name")||"自訂角色",
+    description:str("description"),
+    personality:str("personality"),
+    scenario:str("scenario"),
+    first_mes:str("first_mes")||str("firstMes"),
+    mes_example:str("mes_example"),
+    system_prompt:str("system_prompt")
+  };
+}
+function applyCard(slot, card, portrait){
+  var c=ROSTER.filter(function(x){return x.id===slot})[0];
+  if(!c) return;
+  c.card=card; c.name=card.name; c.job="角色卡";
+  if(portrait) c.photo=portrait;
+  if(S.active===slot){ S.card=card; S.theirName=card.name; S.media=c.photo; S.mediaKind=c.photo?"img":null; }
+  save();
+}
+function matchLore(text){
+  var t=String(text||"").toLowerCase();
+  return (S.world||[]).filter(function(e){
+    if(!e||!e.content) return false;
+    if(e.constant) return true;
+    return (e.keys||[]).some(function(k){return k&&t.indexOf(String(k).toLowerCase())>=0});
+  }).map(function(e){return e.content}).join("\n").slice(0,1200);
+}
+function parseWorld(json){
+  var out=[], push=function(e){
+    if(!e||typeof e!=="object") return;
+    var keys=[].concat(e.key||[], e.keys||[], String(e.key||"").split(/[,，]/)).map(function(k){return String(k).trim()}).filter(Boolean);
+    var content=String(e.content||e.value||"").trim();
+    if(!content) return;
+    out.push({keys:keys,content:content,constant:!!(e.constant||e.always)});
+  };
+  var entries=json.entries||json.character_book||json;
+  if(Array.isArray(entries)) entries.forEach(push);
+  else if(entries&&typeof entries==="object"){
+    var inner=Array.isArray(entries.entries)?entries.entries:Object.values(entries);
+    inner.forEach(push);
+  }
+  return out;
+}
+
 function speak(text){
   if(S.perf==="save") return;
   if(!S.voiceOn||!window.speechSynthesis) return;
@@ -89,74 +202,51 @@ function speak(text){
 function face(url,kind,name,cls){
   if(url&&kind==="video") return '<video class="'+cls+'" src="'+url+'" muted loop autoplay playsinline></video>';
   if(url) return '<img class="'+cls+'" src="'+url+'" alt="">';
-  return '<div class="'+cls+' av-fallback">'+esc(name).slice(0,1)+"</div>";
+  return '<div class="'+cls+' av-fallback">'+esc(name||"?").slice(0,1)+"</div>";
+}
+function cardTalk(raw){
+  var t=raw.trim(), n=(S.card&&S.card.name)||S.theirName;
+  var bit=((S.card&&(S.card.personality||S.card.description))||n).replace(/\s+/g," ").slice(0,40);
+  var lore=matchLore(t+" "+S.note);
+  if(!t) return n+"在聽。";
+  if(/安安|hi|嗨|你好|早|晚安/.test(t)) return ((S.card&&S.card.first_mes)||("安，我是"+n)).split("\n")[0].slice(0,80);
+  if(/你是誰|名字/.test(t)) return "我是"+n+"。"+bit;
+  if(lore) return lore.split("\n")[0].slice(0,70);
+  if(/想你|喜歡|愛/.test(t)) return "…我也在想你。";
+  if(S.dayPart==="day") return pick(["早。"+bit,"出門了沒"]);
+  if(S.dayPart==="night") return pick(["別熬夜","今晚想你"]);
+  return pick(["嗯，我在聽。","然後呢？",bit+"…所以呢","好，我知道了。"]);
 }
 function reply(raw){
-  var t=raw.trim(), r=S.relation, p=S.personality;
-  var inCall=S.screen==="call"||S.isCalling;
+  var t=raw.trim();
+  if(S.card) return cardTalk(t);
+  var r=S.relation, inCall=S.screen==="call"||S.isCalling;
   var justHungUp=!inCall&&S.turns<S.quietUntil;
-  if(!t) return p==="soft"?"嗯…你要說什麼":p==="warm"?"講啊，我在聽":"蛤？你要說什麼";
-  if(S.job.indexOf("千金")>=0){
-    if(inCall) return pick(["哥哥好看吧","哥哥陪我嘛","嘿嘿 哥哥在耶"]);
-    return pick(["哥哥想你了","哥哥在幹嘛 我好閒","對阿對阿","最愛你了 哥哥","哥哥陪我去買東西嘛","無聊欸"]);
-  }
-  if(S.job.indexOf("總裁")>=0||S.job.indexOf("老闆")>=0){
-    if(inCall) return pick(["臭小子這樣才對","乖乖聽話","喜歡你 很有感覺"]);
-    var b=pick(["臭小子還不起來上班","沒有加班費","乖乖聽話","這樣才對","幹的好等等給你一點獎勵","喜歡你 很有感覺","明天準時上班阿","不準跟別人約會"]);
-    if(b.indexOf("獎勵")>=0 && !inCall && !justHungUp){ S._forceCall=true; }
-    return b;
-  }
+  if(!t) return "蛤？你要說什麼";
   if(hit(t,["舔","性","床","裸","色色","做愛"])) return "這個先不要啦。我們就當聊天就好。";
-  if(hit(t,["晚安","睡"])) return pick(["晚安喔","去睡啦"]);
-  if(hit(t,["早安"])) return pick(["早啊，吃了沒","這麼早"]);
-  if(t==="安"||hit(t,["安安","hi","HI","嗨","哈囉"])){
+  if(t==="安"||hit(t,["安安","hi","HI","嗨"])){
     if(S.dayPart==="day") return pick(["早安","早啊，吃了沒"]);
     if(S.dayPart==="noon") return pick(["中午安","吃飯沒"]);
     return pick(["安，這麼晚還在","吃晚餐沒"]);
   }
-  if(hit(t,["在嗎","在嘛"])) return pick(["在啊","在，有事嗎"]);
-  if(hit(t,["想你","喜歡你","愛你","寶貝","抱抱","親親"])) {
-    if(r==="friend") return "想太多。我們是朋友";
-    if(inCall) return pick(["看你就好了","不要掛啦","看著我"]);
-    if(justHungUp) return pick(["剛看到你了還想你","先聊天啦"]);
-    if(r==="dating") return pick(["想你啊","抱抱"]);
-    return pick(["才沒有想你。好啦有一點點"]);
-  }
-  if(hit(t,["真的假的"])) return "啥";
   if(hit(t,["視訊","通話","看你"])) {
-    if(inCall) return pick(["我們不是正在講嗎 傻眼","已經在了好不好","訊號還好嗎"]);
-    if(justHungUp) return pick(["剛講完欸，先聊天啦","等等再視訊"]);
-    return r==="dating"?pick(["想看你，接一下嘛","快接，我想看你"]):pick(["好啊，你開我就接"]);
+    if(inCall) return "已經在了好不好";
+    if(justHungUp) return "剛講完欸，先聊天啦";
+    return r==="dating"?"想看你，接一下嘛":"好啊，你開我就接";
   }
-  if(hit(t,["吃","餓"])) {
-    if(hit(t,["吃了","吃飽","剛吃"])) return pick(["好，有吃就好","那記得喝水"]);
-    return r==="dating"?pick(["寶貝你吃飽沒","你想吃什麼"]):pick(["吃飽沒"]);
-  }
-  if(hit(t,["雨","傘","冷"])) return pick(["下雨了喔，傘帶了沒","冷的話多穿一件"]);
-  if(hit(t,["捷運","公車","塞車","遲到"])) return pick(["捷運人超多吧","到了跟我說","注意安全"]);
-  if(hit(t,["7-11","超商","小七","全聯"])) return pick(["你又去小七","超商買完早點回家"]);
-  if(hit(t,["下雨","好熱","好冷","颱風"])) return pick(["記得帶傘","多喝水","外套穿了沒"]);
-  if(hit(t,["頭痛","感冒","不舒服"])) return pick(["不舒服就去休息","藥吃了沒"]);
-  if(hit(t,["加班","下班"])) return pick(["下班了跟我說一聲","別撐太晚"]);
-  if(hit(t,["已讀"])) return pick(["我沒有故意，剛剛在忙","抱歉啦剛看到"]);
-  if(inCall) return pick(["看你就好了","訊號還好嗎","不要掛啦","你那邊亮亮的"]);
-  if(justHungUp) return pick(["剛看到你了","先聊天啦，等等再說","嗯嗯，我還在"]);
-  if(r==="dating") return pick(["想你了","抱抱。今天好想你","寶貝你在幹嘛"]);
-  return pick(["是喔","然後呢","這樣喔","好喔","哈哈好","可以啊"]);
+  if(inCall) return pick(["看你就好了","訊號還好嗎","不要掛啦"]);
+  if(justHungUp) return pick(["剛看到你了","先聊天啦"]);
+  if(r==="dating") return pick(["想你了","今天好嗎","抱抱"]);
+  return pick(["是喔","然後呢","好喔","哈哈好"]);
 }
 function hi(){
   var rel=RELS.filter(function(x){return x[0]===S.relation})[0][1];
-  var text="安安";
-  if(S.job.indexOf("千金")>=0) text="哥哥～好閒喔。想你了，陪我逛街好不好";
-  else if(S.job.indexOf("總裁")>=0) text="臭小子還不起來上班。沒有加班費。乖乖聽話";
-  else if(S.relation==="dating"){
-    text=S.personality==="soft"?"你在嗎…想看你。可以視訊嗎":S.personality==="warm"?"安安！想你了啦。快接視訊":"安安，剛下班。想你了。要不要視訊一下";
-  } else if(S.relation==="childhood") text="安安，好久不見喔。你在幹嘛";
-  S.messages=[{who:"sys",text:"與 "+S.theirName+" 的對話　"+S.job+"　"+rel},{who:"them",text:text}];
+  var text=(S.card&&S.card.first_mes)?S.card.first_mes.split("\n")[0]:"安安。先上傳角色卡，我會照人設說話。";
+  S.messages=[{who:"sys",text:"與 "+S.theirName+" 的對話　"+(S.card?"角色卡":S.job)+"　"+rel},{who:"them",text:text}];
   S.turns=0; S.incoming=false; S.isCalling=false; S.pending=false; S.quietUntil=0;
-  if(S.relation==="dating") setTimeout(function(){
-    if(S.screen==="chat"&&!blocked()){ S.incoming=true; startRing(); draw(); }
-  },2200);
+  if(S.relation==="dating"&&S.card) setTimeout(function(){
+    if(S.screen==="chat"&&!blocked()&&!S.noVideo[S.active]){ S.incoming=true; startRing(); draw(); }
+  },2400);
 }
 function fileUrl(f){return URL.createObjectURL(f)}
 function afterReply(text){
@@ -167,14 +257,12 @@ function afterReply(text){
     text=String(text).replace(/要不要(開)?視訊[一下嘛好不好啦喔]*/g,"").replace(/開視訊/g,"").replace(/接一下嘛/g,"").trim();
     if(!text) text=inCall?"看你就好了":"嗯嗯，我在";
   }
-  var canRing=S.screen==="chat"&&S.relation==="dating"&&!S.isCalling&&!S.incoming&&!cooling&&S.turns>0&&S.turns%8===0&&!S.noVideo[S.active];
-  if(S._forceCall){ canRing=false; }
+  var canRing=S.screen==="chat"&&S.relation==="dating"&&!!S.card&&!S.isCalling&&!S.incoming&&!cooling&&S.turns>0&&S.turns%8===0&&!S.noVideo[S.active];
   if(canRing&&text.indexOf("視訊")<0) text+="\n想看你，接一下嘛";
   var voice=S.screen!=="call"&&S.relation==="dating"&&text.length<36&&Math.random()<0.4;
   S.messages.push({who:"them",text:text,kind:voice?"voice":"text",secs:voice?Math.max(2,Math.min(12,Math.round(text.length/4))):undefined});
   S.typing=false; S.pending=false;
-  if(S._forceCall && S.screen!=="call"){ S._forceCall=false; S.incoming=false; S.isCalling=true; S.screen="call"; stopRing(); }
-  else if(canRing){ S.incoming=true; startRing(); }
+  if(canRing){ S.incoming=true; startRing(); }
   save();
   draw();
   if(!voice&&S.voiceOn&&S.screen!=="call") speak(text);
@@ -194,18 +282,21 @@ function send(text){
   if(S.incoming&&/好啊|好呀|可以|接|開/.test(t)){
     S.messages.push({who:"me",text:t,read:true}); S.incoming=false; S.isCalling=true; S.screen="call"; stopRing(); draw(); return;
   }
+  bumpLove(t);
   var mine={who:"me",text:t,read:false,kind:"text"};
   S.messages.push(mine);
   delayThen(t, mine);
 }
 function sendSticker(label){
   if(S.typing||S.pending) return;
+  bumpLove(label);
   var mine={who:"me",kind:"sticker",text:label,read:false};
   S.messages.push(mine);
-  delayThen(label==="真的假的"?"啥":"（貼圖）", mine);
+  delayThen("（貼圖）", mine);
 }
 function sendImg(url){
   if(S.typing||S.pending) return;
+  bumpLove("照片");
   var mine={who:"me",kind:"image",image:url,text:"",read:false};
   S.messages.push(mine);
   delayThen("（我傳了一張照片給你）", mine);
@@ -220,18 +311,14 @@ function chips(){
   var t=lastThem(), r=S.relation, inCall=S.screen==="call"||S.isCalling, pool=[];
   if(inCall) pool=["訊號還好嗎","好看","不要掛","想你","哈哈","我在聽"];
   else {
-    if(hit(t,["安安","早安","剛下班"])) pool.push("安","吃了沒","今天怎樣");
-    if(hit(t,["吃","餓"])) pool.push("吃了","還沒","你呢");
-    if(hit(t,["累","忙"])) pool.push("辛苦了","去休息");
-    if(hit(t,["想你","抱抱","寶貝"])) pool.push(r==="friend"?"好啦好啦":"我也是","抱抱");
+    if(hit(t,["安安","早安"])) pool.push("安","吃了沒");
     if(hit(t,["視訊","接一下"])) pool.push("好啊","等一下","先聊天");
     if(r==="dating") pool.push("想你了","吃飯沒","在幹嘛");
     else pool.push("好喔","是喔");
-    pool.push("哈哈","真的假的","然後呢");
+    pool.push("哈哈","然後呢");
   }
   var u=[], seen={};
   pool.forEach(function(x){ if(x&&!seen[x]){ seen[x]=1; u.push(x);} });
-  u.sort(function(){return Math.random()-0.5});
   return u.slice(0,3);
 }
 function chipsHtml(){
@@ -239,13 +326,25 @@ function chipsHtml(){
   if(!c.length) return "";
   return '<div class="qrow">'+c.map(function(x){return '<button class="qchip" type="button" data-q="'+esc(x)+'">'+esc(x)+"</button>";}).join("")+"</div>";
 }
+function tabs(cur){
+  return '<nav class="tabs">'+
+    '<button class="tab '+(cur==="list"?"on":"")+'" id="tlist" type="button">訊息</button>'+
+    '<button class="tab '+(cur==="cal"?"on":"")+'" id="tcal" type="button">日程</button>'+
+    '<button class="tab '+(cur==="setup"?"on":"")+'" id="tset" type="button">我的</button>'+
+  "</nav>";
+}
+function bindTabs(){
+  if($("tlist")) $("tlist").onclick=function(){S.screen="list";save();draw()};
+  if($("tcal")) $("tcal").onclick=function(){S.screen="cal";save();draw()};
+  if($("tset")) $("tset").onclick=function(){S.screen="setup";save();draw()};
+}
 function inviteHtml(){
   if(!S.incoming||S.screen==="call") return "";
   return '<div class="invite">'+
     '<div class="invbg">'+face(S.media,S.mediaKind,S.theirName,"fill")+"</div>"+
     '<div class="invshade"></div>'+
     '<div class="invui">'+
-      '<p class="gold">LINE 視訊來電</p>'+
+      '<p class="gold">視訊來電</p>'+
       face(S.media,S.mediaKind,S.theirName,"invav")+
       "<b>"+esc(S.theirName)+"</b>"+
       "<p>"+esc(S.theirName)+" 正在撥打視訊通話給您…</p>"+
@@ -255,78 +354,153 @@ function inviteHtml(){
       "</div>"+
     "</div></div>";
 }
+
+function pickCardFile(slot){
+  var i=document.createElement("input"); i.type="file"; i.accept="image/png,.png,.json,application/json";
+  i.onchange=function(){
+    var f=i.files[0]; if(!f) return;
+    var name=f.name.toLowerCase();
+    function done(card, portrait){ applyCard(slot, card, portrait); draw(); }
+    if(name.slice(-5)===".json"||(f.type&&f.type.indexOf("json")>=0)){
+      var r=new FileReader();
+      r.onload=function(){ try{ done(asCard(JSON.parse(r.result)), null); }catch(e){ alert("JSON 讀取失敗"); } };
+      r.readAsText(f); return;
+    }
+    var br=new FileReader();
+    br.onload=function(){
+      try{
+        var raw=parsePngChara(br.result);
+        if(!raw){ alert("這張圖沒有角色卡資料"); return; }
+        done(asCard(JSON.parse(raw)), fileUrl(f));
+      }catch(e){ alert("角色卡解析失敗"); }
+    };
+    br.readAsArrayBuffer(f);
+  };
+  i.click();
+}
+
 function draw(){
   var app=$("app"); if(!app) return;
   if(S.screen==="setup"){
-    app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">遊戲視窗</span></header>'+
+    app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b></header>'+
     '<main class="pad">'+
-      '<p class="muted">上傳形象、選語音跟個性後開始。</p>'+
-      '<div class="two">'+
-        '<div><label>你的形象</label><div class="up" id="upme">'+(S.myMedia?face(S.myMedia,S.myKind,S.myName,"fill"):"點這裡上傳你的照片或短影片")+"</div></div>"+
-        '<div><label>對方頭貼（靜態）</label><div class="up" id="up">'+(S.media?face(S.media,"img",S.theirName,"fill"):"點這裡上傳頭貼")+"</div></div>"+
-        '<div><label>視訊影片（動態）</label><div class="up" id="upcall">'+(S.callVideo?'<video class="fill" src="'+S.callVideo+'" muted loop autoplay playsinline></video>':"點這裡上傳視訊，避免一片黑")+"</div></div>"+
+      '<p class="heart" style="font-size:11px;font-weight:700;letter-spacing:.12em">SILLYTAVERN</p>'+
+      "<h2>角色卡 · 世界書 · 筆記本</h2>"+
+      '<p class="muted">三位都是空位。上傳 PNG／JSON 角色卡，或寫人設。可再加世界書與筆記本。</p>'+
+      ROSTER.map(function(c,i){
+        return '<div class="slot">'+face(c.photo,"img",c.name,"av14")+
+          '<div style="flex:1;min-width:0"><b>'+esc(c.card?c.card.name:c.name)+'</b><div class="muted">'+(c.card?"已套用角色卡":"空位")+"</div></div>"+
+          '<button class="rel" data-card="'+c.id+'" type="button">上傳卡</button></div>';
+      }).join("")+
+      '<label>手寫人設（套用到目前角色）</label>'+
+      '<input id="cname" type="text" placeholder="名字" value="'+esc(S.theirName)+'"/>'+
+      '<textarea class="note" id="cpers" placeholder="性格"></textarea>'+
+      '<textarea class="note" id="cdesc" placeholder="世界觀／背景"></textarea>'+
+      '<textarea class="note" id="chi" placeholder="開場白"></textarea>'+
+      '<button class="btn ghost" id="applyc" type="button">套用這個人設</button>'+
+      '<div class="two" style="margin-top:12px">'+
+        '<button class="rel" id="upworld" type="button">世界書 JSON（'+S.world.length+"）</button>"+
+        '<button class="rel" id="upnote" type="button">筆記本 txt／md</button>'+
       "</div>"+
+      '<textarea class="note" id="note">'+esc(S.note)+"</textarea>"+
+      '<label>你的形象</label><div class="up" id="upme">'+(S.myMedia?face(S.myMedia,S.myKind,S.myName,"fill"):"點這裡上傳你的照片或短影片")+"</div>"+
       '<label>你的名字</label><input id="me" type="text" value="'+esc(S.myName)+'"/>'+
-      '<label>對方名字</label><input id="them" type="text" value="'+esc(S.theirName)+'"/>'+
-      '<label>對方職業</label><input id="job" type="text" value="'+esc(S.job)+'"/>'+
-      '<div class="chips">'+JOBS.map(function(j){return '<button class="chip '+(S.job===j?"on":"")+'" data-job="'+j+'">'+j+"</button>"}).join("")+"</div>"+
-      "<label>你們的關係</label>"+
+      "<label>關係</label>"+
       '<div class="rels">'+RELS.map(function(x){return '<button class="rel '+(S.relation===x[0]?"on":"")+'" data-rel="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
-      "<label>時段（對話會跟著變）</label>"+
+      "<label>時段</label>"+
       '<div class="rels">'+DAYS.map(function(x){return '<button class="rel '+(S.dayPart===x[0]?"on":"")+'" data-day="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
-      "<label>效能</label>"+
-      '<div class="rels"><button class="rel '+(S.perf==="smooth"?"on":"")+'" id="ps">順暢（特效、鈴聲）</button><button class="rel '+(S.perf==="save"?"on":"")+'" id="pe">省電（少動畫）</button></div>'+
-      "<label>語音朗讀</label>"+
-      '<button class="rel '+(S.voiceOn?"on":"")+'" id="von">'+(S.voiceOn?"語音朗讀：開":"語音朗讀：關")+"</button>"+
-      "<label>女主語音</label>"+
+      "<label>語音</label>"+
+      '<button class="rel '+(S.voiceOn?"on":"")+'" id="von" type="button">'+(S.voiceOn?"語音開":"語音關")+"</button>"+
       '<div class="rels">'+VOICES.map(function(x){return '<button class="rel '+(S.voice===x[0]?"on":"")+'" data-voice="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
-      "<label>個性</label>"+
+      "<label>個性（沒角色卡時用）</label>"+
       '<div class="rels">'+PERS.map(function(x){return '<button class="rel '+(S.personality===x[0]?"on":"")+'" data-p="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>"+
       '<button class="btn" id="go">開始聊天</button>'+
-    "</main>";
-    app.querySelectorAll("[data-job]").forEach(function(b){b.onclick=function(){S.job=b.getAttribute("data-job");draw()}});
+    "</main>"+tabs("setup");
+    bindTabs();
+    app.querySelectorAll("[data-card]").forEach(function(b){b.onclick=function(){pickCardFile(b.getAttribute("data-card"))}});
     app.querySelectorAll("[data-rel]").forEach(function(b){b.onclick=function(){S.relation=b.getAttribute("data-rel");draw()}});
     app.querySelectorAll("[data-voice]").forEach(function(b){b.onclick=function(){S.voice=b.getAttribute("data-voice");draw()}});
     app.querySelectorAll("[data-p]").forEach(function(b){b.onclick=function(){S.personality=b.getAttribute("data-p");draw()}});
     app.querySelectorAll("[data-day]").forEach(function(b){b.onclick=function(){S.dayPart=b.getAttribute("data-day");draw()}});
     $("von").onclick=function(){S.voiceOn=!S.voiceOn;draw()};
-    $("ps").onclick=function(){S.perf="smooth";draw()};
-    $("pe").onclick=function(){S.perf="save";draw()};
     $("me").oninput=function(e){S.myName=e.target.value};
-    $("them").oninput=function(e){S.theirName=e.target.value};
-    $("job").oninput=function(e){S.job=e.target.value};
-    function pickFile(who){
-      var i=document.createElement("input"); i.type="file"; i.accept="image/*,video/*";
-      i.onchange=function(){var f=i.files[0]; if(!f)return; var k=f.type.indexOf("video/")===0?"video":"img";
-        if(who==="me"){S.myMedia=fileUrl(f);S.myKind=k} else {S.media=fileUrl(f);S.mediaKind=k} draw()};
-      i.click();
-    }
-    $("up").onclick=function(){pickFile("them")};
-    $("upme").onclick=function(){pickFile("me")};
-    $("upcall").onclick=function(){
-      var i=document.createElement("input"); i.type="file"; i.accept="video/*";
-      i.onchange=function(){ if(i.files[0]){ S.callVideo=fileUrl(i.files[0]); draw(); } };
+    $("note").oninput=function(e){S.note=e.target.value};
+    $("applyc").onclick=function(){
+      applyCard(S.active, {name:$("cname").value||"自訂角色",personality:$("cpers").value,description:$("cdesc").value,scenario:"",first_mes:$("chi").value||"安安。",mes_example:"",system_prompt:""}, null);
+      draw();
+    };
+    $("upworld").onclick=function(){
+      var i=document.createElement("input"); i.type="file"; i.accept=".json,.txt,.md,application/json";
+      i.onchange=function(){
+        var f=i.files[0]; if(!f) return;
+        var r=new FileReader();
+        r.onload=function(){
+          try{ var j=JSON.parse(r.result); S.world=parseWorld(j); }
+          catch(e){ S.note=String(r.result).slice(0,8000); }
+          save(); draw();
+        };
+        r.readAsText(f);
+      };
       i.click();
     };
-    $("go").onclick=function(){hi();S.screen="list";save();draw()};
+    $("upnote").onclick=function(){
+      var i=document.createElement("input"); i.type="file"; i.accept=".txt,.md,.json,text/plain";
+      i.onchange=function(){
+        var f=i.files[0]; if(!f) return;
+        var r=new FileReader();
+        r.onload=function(){ S.note=String(r.result).slice(0,8000); save(); draw(); };
+        r.readAsText(f);
+      };
+      i.click();
+    };
+    $("upme").onclick=function(){
+      var i=document.createElement("input"); i.type="file"; i.accept="image/*,video/*";
+      i.onchange=function(){var f=i.files[0]; if(!f)return; S.myMedia=fileUrl(f); S.myKind=f.type.indexOf("video/")===0?"video":"img"; draw();};
+      i.click();
+    };
+    $("go").onclick=function(){applyCast(S.active); S.screen="list"; save(); draw()};
     return;
   }
   if(S.screen==="list"){
-    app.innerHTML='<header class="top"><b>好友</b><span><button class="icon" id="tochat" type="button">返回聊天室</button> <button class="icon" id="toset" type="button">設定</button></span></header>'+
-      '<p class="muted" style="padding:4px 16px">小雨 · 小安（千金）· 雅萍（總裁）　完全離線</p>'+
+    var plan=PLANS.filter(function(p){return p.d===S.weekday})[0]||PLANS[0];
+    app.innerHTML='<div style="padding:16px 16px 8px;background:var(--crush)"><p class="heart" style="font-size:11px;font-weight:700">MESSAGES</p><h2>訊息</h2>'+
+      '<button class="card" id="tocal" type="button" style="width:100%;text-align:left">♥ '+WEEK[S.weekday]+" · "+esc(plan.title)+' <span class="heart">日程</span></button></div>'+
       ROSTER.map(function(c){
         return '<button class="frow" type="button" data-id="'+c.id+'">'+
           face(c.photo,"img",c.name,"av14")+
-          '<div style="flex:1;min-width:0;border-bottom:1px solid #eee;padding-bottom:12px"><b>'+esc(c.name)+'</b><div class="muted">'+esc(c.job)+'</div></div></button>';
-      }).join("");
-    $("tochat").onclick=function(){S.screen="chat";if(!S.messages.length)hi();save();draw()};
-    $("toset").onclick=function(){S.screen="setup";save();draw()};
+          '<div style="flex:1;min-width:0;border-bottom:1px solid #ffd0dc;padding-bottom:12px">'+
+            '<div style="display:flex;justify-content:space-between"><b>'+esc(c.card?c.card.name:c.name)+'</b><span class="heart">♥ '+(c.affection||20)+"</span></div>"+
+            '<div class="muted">'+(c.card?"角色卡已套用":"空位，去設定上傳卡")+"</div>"+
+            '<div class="meter"><i style="width:'+(c.affection||20)+'%"></i></div></div></button>';
+      }).join("")+tabs("list");
+    bindTabs();
+    $("tocal").onclick=function(){S.screen="cal";save();draw()};
     app.querySelectorAll("[data-id]").forEach(function(b){b.onclick=function(){applyCast(b.getAttribute("data-id"));S.screen="chat";save();draw()}});
+    return;
+  }
+  if(S.screen==="cal"){
+    var today=PLANS.filter(function(p){return p.d===S.weekday})[0]||PLANS[0];
+    var who=ROSTER.filter(function(r){return r.id===today.who})[0];
+    app.innerHTML='<div class="pad">'+
+      '<p class="heart" style="font-size:11px;font-weight:700">LOVE WEEK</p><h2>戀愛日程</h2>'+
+      '<div class="days">'+WEEK.map(function(d,i){return '<button type="button" class="'+(i===S.weekday?"on":"")+'" data-w="'+i+'">'+d.replace("週","")+"</button>"}).join("")+"</div>"+
+      '<div class="card"><p class="heart">'+WEEK[S.weekday]+' · 今日</p><h3>'+esc(today.title)+"</h3>"+
+      '<p class="muted">'+esc(today.place)+" · "+esc(who?(who.card?who.card.name:who.name):"")+"</p>"+
+      '<button class="btn" id="goplan" type="button">傳訊給她</button></div>'+
+      PLANS.map(function(p){
+        var w=ROSTER.filter(function(r){return r.id===p.who})[0];
+        return '<button class="slot" type="button" data-w="'+p.d+'">'+face(w&&w.photo,"img",w?w.name:"","av14")+
+          "<div><b>"+esc(p.title)+'</b><div class="muted">'+WEEK[p.d]+" · "+esc(w?(w.card?w.card.name:w.name):"")+"</div></div></button>";
+      }).join("")+
+    "</div>"+tabs("cal");
+    bindTabs();
+    app.querySelectorAll("[data-w]").forEach(function(b){b.onclick=function(){S.weekday=+b.getAttribute("data-w");save();draw()}});
+    $("goplan").onclick=function(){applyCast(today.who);S.screen="chat";save();draw()};
     return;
   }
   if(S.screen==="call"){
     var media = S.callVideo
-      ? '<video class="fill" src="'+S.callVideo+'" autoplay muted loop playsinline></video><img class="fill" src="'+(S.media||"")+'" alt="" style="position:absolute;inset:0;z-index:-1">'
+      ? '<video class="fill" src="'+S.callVideo+'" autoplay muted loop playsinline></video>'+(S.media?'<img class="fill" src="'+S.media+'" alt="" style="position:absolute;inset:0;z-index:-1">':"")
       : (S.media ? '<img class="fill" src="'+S.media+'" alt="">' : face(null,null,S.theirName,"invav"));
     app.innerHTML='<div class="call">'+media+'<div class="shade"></div><div class="ui">'+
       '<div class="top"><div>'+esc(S.theirName)+(S.callVideo?" · 視訊中":" · 先顯示頭貼")+'</div>'+
@@ -342,20 +516,18 @@ function draw(){
     $("hang").onclick=function(){S.screen="chat";S.incoming=false;S.isCalling=false;S.quietUntil=S.turns+8;S.noVideo[S.active]=true;stopRing();S.messages.push({who:"sys",text:"通話已結束"});save();draw()};
     if($("upvid")) $("upvid").onclick=function(){
       var i=document.createElement("input"); i.type="file"; i.accept="video/*";
-      i.onchange=function(){ if(i.files[0]){ S.callVideo=fileUrl(i.files[0]); draw(); } };
+      i.onchange=function(){ if(i.files[0]){ S.callVideo=fileUrl(i.files[0]); var c=ROSTER.filter(function(x){return x.id===S.active})[0]; if(c) c.callVideo=S.callVideo; draw(); } };
       i.click();
     };
     app.querySelectorAll("[data-q]").forEach(function(b){b.onclick=function(){send(b.getAttribute("data-q"));}});
     $("cin").focus();
-    $("cin").focus();
     return;
   }
-  app.innerHTML='<header class="top"><b>曖了曖了LIVE <span class="gold">(獨享版)</span></b><span class="muted">遊戲視窗</span></header>'+
-  '<div class="chat'+(S.perf==="save"?" plain":"")+'">'+
+  app.innerHTML='<div class="chat'+(S.perf==="save"?" plain":"")+'">'+
     '<div class="chatbar">'+
       '<button class="icon" id="back" type="button">←</button>'+
       face(S.media,S.mediaKind,S.theirName,"av")+
-      '<div id="sw" style="flex:1;min-width:0;text-align:left"><b>'+esc(S.theirName)+'</b><div class="muted">點這裡切換好友</div></div>'+
+      '<div id="sw" style="flex:1;min-width:0;text-align:left"><b>'+esc(S.theirName)+'</b><div class="heart" style="font-size:11px">'+loveLabel(S.affection)+" · ♥ "+S.affection+"</div></div>"+
       '<button class="icon '+(S.voiceOn?"on":"")+'" id="vo" type="button">'+(S.voiceOn?"語音開":"語音關")+"</button>"+
       '<button class="icon" id="wall" type="button">背景</button>'+
       '<button class="icon" id="vid" type="button">視訊</button>'+
@@ -372,7 +544,7 @@ function draw(){
   fillLogs($("logs"));
   $("back").onclick=function(){S.screen="list";save();draw()};
   $("sw").onclick=function(){S.screen="list";save();draw()};
-  $("vid").onclick=function(){S.screen="call";S.incoming=false;S.isCalling=true;stopRing();draw()};
+  $("vid").onclick=function(){S.screen="call";S.incoming=false;S.isCalling=true;S.affection=Math.min(100,S.affection+22);syncActive();stopRing();draw()};
   $("vo").onclick=function(){S.voiceOn=!S.voiceOn;draw()};
   $("smile").onclick=function(){var t=$("tray"); t.hidden=!t.hidden};
   $("tray").querySelectorAll("[data-s]").forEach(function(b){b.onclick=function(){sendSticker(b.getAttribute("data-s"))}});
@@ -382,11 +554,10 @@ function draw(){
   $("imgb").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0])sendImg(fileUrl(i.files[0]))};i.click()};
   $("wall").onclick=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.onchange=function(){if(i.files[0]){S.wall=fileUrl(i.files[0]);draw()}};i.click()};
   if($("yes")) $("yes").onclick=function(){S.incoming=false;S.isCalling=true;S.screen="call";stopRing();draw()};
-  if($("no")) $("no").onclick=function(){S.incoming=false;S.isCalling=false;stopRing();S.messages.push({who:"sys",text:"你拒絕了視訊"},{who:"them",text:"好喔，那先聊天"});draw()};
+  if($("no")) $("no").onclick=function(){S.incoming=false;S.isCalling=false;S.noVideo[S.active]=true;stopRing();S.messages.push({who:"sys",text:"你拒絕了視訊"},{who:"them",text:"好喔，那先聊天"});draw()};
   app.querySelectorAll("[data-q]").forEach(function(b){b.onclick=function(){send(b.getAttribute("data-q"));}});
   $("cin").focus();
   boxVoice($("logs"));
-  $("cin").focus();
 }
 function boxVoice(box){
   if(!box) return;
@@ -402,9 +573,9 @@ function fillLogs(box){
     else if(m.kind==="image") inner='<img class="pic" src="'+m.image+'" alt="">';
     else if(m.kind==="voice") inner='<button class="voice" type="button" data-voice="'+esc(m.text)+'"><span class="vplay">▶</span><span class="vbar"></span><span>'+(m.secs||4)+'"</span></button>';
     else inner='<div class="bub">'+esc(m.text).replace(/\n/g,"<br>")+"</div>";
-    var stamp=m.who==="me"?(m.read===false?'<span class="time wait">'+""+"</span>":'<span class="time">已讀</span>'):'<span class="time">　</span>';
+    var stamp=m.who==="me"?(m.read===false?'<span class="time wait"></span>':'<span class="time">已讀</span>'):'<span class="time">　</span>';
     return '<div class="row '+m.who+'">'+(m.who==="them"?face(S.media,S.mediaKind,S.theirName,"av"):"")+"<div>"+inner+stamp+"</div></div>";
   }).join("")+(S.typing?'<p class="sys"><span>輸入中…</span></p>':"");
   box.scrollTop=box.scrollHeight;
 }
-try{draw()}catch(e){document.getElementById("app").innerHTML="<p style='padding:24px'>開啟失敗</p>"}
+try{draw()}catch(e){document.getElementById("app").innerHTML="<p style='padding:24px'>開啟失敗："+esc(e.message)+"</p>"}
